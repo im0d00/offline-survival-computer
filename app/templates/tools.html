@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block title %}Survival Tools – Offline Survival Computer{% endblock %}
+{% block header %}Survival Tools{% endblock %}
+
+{% block content %}
+<p class="text-muted mb-4">
+  Essential calculators and guides for emergency situations. All calculations are performed locally.
+</p>
+
+<div class="accordion" id="toolsAccordion">
+
+  <!-- Water Purification Tool -->
+  <div class="accordion-item bg-dark border-secondary">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#waterTool">
+        <i class="bi bi-droplet-fill me-2 text-info"></i>Water Purification Calculator
+      </button>
+    </h2>
+    <div id="waterTool" class="accordion-collapse collapse" data-bs-parent="#toolsAccordion">
+      <div class="accordion-body">
+        <form id="waterForm" class="mb-3">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Volume (liters)</label>
+              <input type="number" class="form-control" id="waterVolume" value="10" step="0.1" min="0.1" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Purification Method</label>
+              <select class="form-select" id="waterMethod">
+                <option value="bleach">Household Bleach</option>
+                <option value="iodine">Iodine Tincture</option>
+                <option value="boil" selected>Boiling</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-info mt-3">Calculate</button>
+        </form>
+        <div id="waterResult" class="d-none">
+          <div class="alert alert-info">
+            <h6>Instructions:</h6>
+            <p id="waterInstructions" class="mb-2"></p>
+            <p class="mb-1"><strong>Treatment Amount:</strong> <span id="waterAmount"></span></p>
+            <p class="mb-0"><strong>Wait Time:</strong> <span id="waterWait"></span> minutes</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ration Estimator Tool -->
+  <div class="accordion-item bg-dark border-secondary">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#rationTool">
+        <i class="bi bi-basket-fill me-2 text-warning"></i>Ration Estimator
+      </button>
+    </h2>
+    <div id="rationTool" class="accordion-collapse collapse" data-bs-parent="#toolsAccordion">
+      <div class="accordion-body">
+        <form id="rationForm" class="mb-3">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Number of People</label>
+              <input type="number" class="form-control" id="rationPeople" value="4" min="1" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Number of Days</label>
+              <input type="number" class="form-control" id="rationDays" value="7" min="1" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Activity Level</label>
+              <select class="form-select" id="rationActivity">
+                <option value="rest">Rest (2000 cal/day)</option>
+                <option value="light" selected>Light Activity (2500 cal/day)</option>
+                <option value="heavy">Heavy Work (3500 cal/day)</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-warning mt-3">Calculate</button>
+        </form>
+        <div id="rationResult" class="d-none">
+          <div class="alert alert-warning">
+            <h6>Food Requirements:</h6>
+            <div class="row">
+              <div class="col-md-6">
+                <p class="mb-1"><strong>Total Calories:</strong> <span id="rationTotal"></span></p>
+                <p class="mb-0"><strong>Per Day:</strong> <span id="rationPerDay"></span></p>
+              </div>
+              <div class="col-md-6">
+                <p class="mb-1"><strong>Rice:</strong> <span id="rationRice"></span> kg</p>
+                <p class="mb-1"><strong>Beans:</strong> <span id="rationBeans"></span> kg</p>
+                <p class="mb-0"><strong>Cooking Oil:</strong> <span id="rationOil"></span> liters</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dosage Calculator Tool -->
+  <div class="accordion-item bg-dark border-secondary">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#doseTool">
+        <i class="bi bi-capsule me-2 text-danger"></i>Medication Dosage Calculator
+      </button>
+    </h2>
+    <div id="doseTool" class="accordion-collapse collapse" data-bs-parent="#toolsAccordion">
+      <div class="accordion-body">
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Warning:</strong> This calculator provides general guidance only. Always consult medical professionals when available.
+        </div>
+        <form id="doseForm" class="mb-3">
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label">Medication</label>
+              <select class="form-select" id="doseDrug">
+                <option value="ibuprofen">Ibuprofen</option>
+                <option value="paracetamol">Paracetamol/Acetaminophen</option>
+                <option value="amoxicillin">Amoxicillin (Antibiotic)</option>
+                <option value="aspirin">Aspirin</option>
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Weight (kg)</label>
+              <input type="number" class="form-control" id="doseWeight" value="70" min="1" step="0.1" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Age (years)</label>
+              <input type="number" class="form-control" id="doseAge" value="30" min="0" step="1" />
+            </div>
+          </div>
+          <button type="submit" class="btn btn-danger mt-3">Calculate</button>
+        </form>
+        <div id="doseResult" class="d-none">
+          <div class="alert alert-danger">
+            <h6>Dosage Information:</h6>
+            <p class="mb-1"><strong>Single Dose:</strong> <span id="doseMg"></span> mg</p>
+            <p class="mb-1"><strong>Frequency:</strong> <span id="doseFreq"></span></p>
+            <p class="mb-2"><strong>Maximum Daily:</strong> <span id="doseMax"></span> mg</p>
+            <div id="doseWarnings"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fire Starting Guide Tool -->
+  <div class="accordion-item bg-dark border-secondary">
+    <h2 class="accordion-header">
+      <button class="accordion-button collapsed bg-dark text-white" type="button" data-bs-toggle="collapse" data-bs-target="#fireTool">
+        <i class="bi bi-fire me-2 text-orange" style="color: #fd7e14;"></i>Fire Starting Guide
+      </button>
+    </h2>
+    <div id="fireTool" class="accordion-collapse collapse" data-bs-parent="#toolsAccordion">
+      <div class="accordion-body">
+        <form id="fireForm" class="mb-3">
+          <div class="row g-3">
+            <div class="col-md-12">
+              <label class="form-label">Weather Conditions</label>
+              <select class="form-select" id="fireConditions">
+                <option value="dry" selected>Dry / Normal</option>
+                <option value="wet">Wet / Rainy</option>
+                <option value="windy">Windy</option>
+                <option value="snow">Snow / Winter</option>
+              </select>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary mt-3">Get Guide</button>
+        </form>
+        <div id="fireResult" class="d-none">
+          <div class="alert" style="background-color: #2d1e0f; border-color: #fd7e14; color: #fff;">
+            <h6 id="fireMethod"></h6>
+            <hr class="border-secondary" />
+            <h6 class="mb-2">Steps:</h6>
+            <ol id="fireSteps" class="mb-3"></ol>
+            <h6 class="mb-2">Tinder Options:</h6>
+            <ul id="fireTinder" class="mb-0"></ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Water Purification
+  document.getElementById('waterForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      volume_liters: parseFloat(document.getElementById('waterVolume').value),
+      method: document.getElementById('waterMethod').value
+    };
+
+    const response = await fetch('/tools/water', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    document.getElementById('waterInstructions').textContent = result.instructions;
+    document.getElementById('waterAmount').textContent = result.treatment_amount;
+    document.getElementById('waterWait').textContent = result.wait_time_minutes;
+    document.getElementById('waterResult').classList.remove('d-none');
+  });
+
+  // Ration Estimator
+  document.getElementById('rationForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      people: parseInt(document.getElementById('rationPeople').value),
+      days: parseInt(document.getElementById('rationDays').value),
+      activity: document.getElementById('rationActivity').value
+    };
+
+    const response = await fetch('/tools/calories', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    document.getElementById('rationTotal').textContent = result.total_calories.toLocaleString();
+    document.getElementById('rationPerDay').textContent = result.per_day.toLocaleString();
+    document.getElementById('rationRice').textContent = result.rice_kg;
+    document.getElementById('rationBeans').textContent = result.beans_kg;
+    document.getElementById('rationOil').textContent = result.oil_liters;
+    document.getElementById('rationResult').classList.remove('d-none');
+  });
+
+  // Dosage Calculator
+  document.getElementById('doseForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      drug: document.getElementById('doseDrug').value,
+      weight_kg: parseFloat(document.getElementById('doseWeight').value),
+      age_years: parseFloat(document.getElementById('doseAge').value)
+    };
+
+    const response = await fetch('/tools/dose', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    document.getElementById('doseMg').textContent = result.dose_mg;
+    document.getElementById('doseFreq').textContent = result.frequency;
+    document.getElementById('doseMax').textContent = result.max_daily_mg;
+
+    const warningsDiv = document.getElementById('doseWarnings');
+    if (result.warnings && result.warnings.length > 0) {
+      warningsDiv.innerHTML = '<h6 class="mt-2">⚠️ Warnings:</h6><ul class="mb-0">' +
+        result.warnings.map(w => '<li>' + w + '</li>').join('') + '</ul>';
+    } else {
+      warningsDiv.innerHTML = '';
+    }
+
+    document.getElementById('doseResult').classList.remove('d-none');
+  });
+
+  // Fire Starting Guide
+  document.getElementById('fireForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      conditions: document.getElementById('fireConditions').value
+    };
+
+    const response = await fetch('/tools/fire', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+
+    const result = await response.json();
+    document.getElementById('fireMethod').textContent = result.method;
+
+    const stepsList = document.getElementById('fireSteps');
+    stepsList.innerHTML = result.steps.map(s => '<li>' + s + '</li>').join('');
+
+    const tinderList = document.getElementById('fireTinder');
+    tinderList.innerHTML = result.tinder_options.map(t => '<li>' + t + '</li>').join('');
+
+    document.getElementById('fireResult').classList.remove('d-none');
+  });
+</script>
+{% endblock %}

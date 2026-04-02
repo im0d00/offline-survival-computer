@@ -18,6 +18,7 @@ import psutil
 
 from core.performance_monitor import get_monitor, PerformanceMonitor
 from system.hardware_detector import auto_tune, get_hardware_info
+import survival_tools
 
 # ---------------------------------------------------------------------------
 # App configuration
@@ -730,6 +731,62 @@ def system_page():
     }
 
     return render_template("system.html", volumes=volumes)
+
+
+# ---------------------------------------------------------------------------
+# Survival Tools
+# ---------------------------------------------------------------------------
+
+@app.route("/tools")
+@login_required
+def tools():
+    """Render survival tools page."""
+    return render_template("tools.html")
+
+
+@app.route("/tools/water", methods=["POST"])
+@login_required
+def tools_water():
+    """Water purification calculator."""
+    data = request.get_json() or {}
+    volume_liters = float(data.get("volume_liters", 1))
+    method = data.get("method", "boil")
+    result = survival_tools.water_purification(volume_liters, method)
+    return jsonify(result)
+
+
+@app.route("/tools/calories", methods=["POST"])
+@login_required
+def tools_calories():
+    """Ration estimator."""
+    data = request.get_json() or {}
+    people = int(data.get("people", 1))
+    days = int(data.get("days", 7))
+    activity = data.get("activity", "light")
+    result = survival_tools.ration_estimator(people, days, activity)
+    return jsonify(result)
+
+
+@app.route("/tools/dose", methods=["POST"])
+@login_required
+def tools_dose():
+    """Dosage calculator."""
+    data = request.get_json() or {}
+    drug = data.get("drug", "ibuprofen")
+    weight_kg = float(data.get("weight_kg", 70))
+    age_years = float(data.get("age_years", 30))
+    result = survival_tools.dosage_calculator(drug, weight_kg, age_years)
+    return jsonify(result)
+
+
+@app.route("/tools/fire", methods=["POST"])
+@login_required
+def tools_fire():
+    """Fire starting guide."""
+    data = request.get_json() or {}
+    conditions = data.get("conditions", "dry")
+    result = survival_tools.fire_starting(conditions)
+    return jsonify(result)
 
 
 # ---------------------------------------------------------------------------
