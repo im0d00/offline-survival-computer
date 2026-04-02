@@ -10,6 +10,9 @@ from pathlib import Path
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 
+from core.performance_monitor import get_monitor, PerformanceMonitor
+from system.hardware_detector import auto_tune, get_hardware_info
+
 # ---------------------------------------------------------------------------
 # App configuration
 # ---------------------------------------------------------------------------
@@ -371,9 +374,67 @@ def api_note(note_id: int):
 
 
 # ---------------------------------------------------------------------------
+# Performance Dashboard
+# ---------------------------------------------------------------------------
+
+@app.route("/performance")
+def performance():
+    """Render the real-time performance dashboard."""
+    profile = auto_tune()
+    hw_info = get_hardware_info()
+    return render_template(
+        "performance.html",
+        profile=profile.to_dict(),
+        hw_info=hw_info.to_dict(),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Performance API
+# ---------------------------------------------------------------------------
+
+@app.route("/api/performance/metrics")
+def api_performance_metrics():
+    """Return the latest performance snapshot as JSON."""
+    monitor = get_monitor()
+    snap = monitor.latest()
+    if snap is None:
+        snap = monitor.snapshot_now()
+    return jsonify(snap.to_dict())
+
+
+@app.route("/api/performance/history")
+def api_performance_history():
+    """Return recent performance history (last N snapshots)."""
+    monitor = get_monitor()
+    n = request.args.get("n", 60, type=int)
+    n = max(1, min(n, 120))
+    history = monitor.history(n=n)
+    return jsonify([s.to_dict() for s in history])
+
+
+@app.route("/api/performance/snapshot", methods=["POST"])
+def api_performance_snapshot():
+    """Force an immediate metric collection and return it."""
+    monitor = get_monitor()
+    snap = monitor.snapshot_now()
+    return jsonify(snap.to_dict())
+
+
+@app.route("/api/performance/profile")
+def api_performance_profile():
+    """Return the auto-detected hardware profile and raw hardware info."""
+    profile = auto_tune()
+    hw_info = get_hardware_info()
+    return jsonify({"profile": profile.to_dict(), "hardware": hw_info.to_dict()})
+
+
+# ---------------------------------------------------------------------------
 # Application startup
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
     init_db()
+    # Start background performance monitor
+    get_monitor().start()
     app.run(host="0.0.0.0", port=5000, debug=False)
