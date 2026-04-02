@@ -8,6 +8,8 @@ import datetime
 from pathlib import Path
 
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash
+from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
+from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
 
 from core.performance_monitor import get_monitor, PerformanceMonitor
@@ -29,6 +31,29 @@ ALLOWED_EXTENSIONS = {"pdf", "txt", "md", "docx", "png", "jpg", "jpeg"}
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "offline-survival-computer-secret-key")
 app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB max upload
+
+# Flask-Login setup
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = "login"
+login_manager.login_message = "Please log in to access this page."
+login_manager.login_message_category = "warning"
+
+# Admin credentials from environment
+ADMIN_USERNAME = os.environ.get("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD_HASH = os.environ.get("ADMIN_PASSWORD_HASH", "")
+
+# User class for Flask-Login
+class User(UserMixin):
+    def __init__(self, user_id, username):
+        self.id = user_id
+        self.username = username
+
+@login_manager.user_loader
+def load_user(user_id):
+    if user_id == "1":
+        return User("1", ADMIN_USERNAME)
+    return None
 
 # Service URLs (configurable via environment variables)
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://ollama:11434")
@@ -107,10 +132,46 @@ def check_service(url: str, timeout: int = 2) -> bool:
 
 
 # ---------------------------------------------------------------------------
+# Authentication routes
+# ---------------------------------------------------------------------------
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for("index"))
+
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+
+        if username == ADMIN_USERNAME and ADMIN_PASSWORD_HASH:
+            if check_password_hash(ADMIN_PASSWORD_HASH, password):
+                user = User("1", ADMIN_USERNAME)
+                login_user(user)
+                flash("Login successful!", "success")
+                next_page = request.args.get("next")
+                return redirect(next_page) if next_page else redirect(url_for("index"))
+
+        flash("Invalid username or password.", "danger")
+        return render_template("login.html")
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
+@login_required
+def logout():
+    logout_user()
+    flash("You have been logged out.", "info")
+    return redirect(url_for("login"))
+
+
+# ---------------------------------------------------------------------------
 # Command Center (Dashboard)
 # ---------------------------------------------------------------------------
 
 @app.route("/")
+@login_required
 def index():
     statuses = {
         "kiwix": check_service(KIWIX_URL),
@@ -134,6 +195,7 @@ def index():
 # ---------------------------------------------------------------------------
 
 @app.route("/library")
+@login_required
 def library():
     return render_template("library.html", kiwix_url=KIWIX_URL)
 
@@ -143,6 +205,7 @@ def library():
 # ---------------------------------------------------------------------------
 
 @app.route("/ai")
+@login_required
 def ai_assistant():
     # Fetch available models from Ollama
     import requests as req
@@ -163,6 +226,7 @@ def ai_assistant():
 
 
 @app.route("/ai/chat", methods=["POST"])
+@login_required
 def ai_chat():
     """Proxy a chat request to Ollama."""
     import requests as req
@@ -184,6 +248,7 @@ def ai_chat():
 
 
 @app.route("/ai/upload", methods=["POST"])
+@login_required
 def ai_upload_document():
     """Accept a document file for use in the AI knowledge base."""
     if "file" not in request.files:
@@ -216,6 +281,7 @@ def ai_upload_document():
 
 
 @app.route("/ai/document/<int:doc_id>", methods=["DELETE"])
+@login_required
 def ai_delete_document(doc_id: int):
     """Remove a document from the knowledge base."""
     conn = get_db()
@@ -235,6 +301,7 @@ def ai_delete_document(doc_id: int):
 
 
 @app.route("/ai/models")
+@login_required
 def ai_models():
     """Return available Ollama models as JSON."""
     import requests as req
@@ -252,6 +319,7 @@ def ai_models():
 # ---------------------------------------------------------------------------
 
 @app.route("/education")
+@login_required
 def education():
     return render_template("education.html", kiwix_url=KIWIX_URL)
 
@@ -261,6 +329,7 @@ def education():
 # ---------------------------------------------------------------------------
 
 @app.route("/maps")
+@login_required
 def maps():
     return render_template("maps.html", tile_url=MAPS_TILE_URL)
 
@@ -270,6 +339,7 @@ def maps():
 # ---------------------------------------------------------------------------
 
 @app.route("/notes")
+@login_required
 def notes():
     conn = get_db()
     all_notes = conn.execute(
@@ -280,6 +350,7 @@ def notes():
 
 
 @app.route("/notes/new", methods=["GET", "POST"])
+@login_required
 def notes_new():
     if request.method == "POST":
         title = request.form.get("title", "").strip()
@@ -303,6 +374,7 @@ def notes_new():
 
 
 @app.route("/notes/<int:note_id>")
+@login_required
 def notes_view(note_id: int):
     conn = get_db()
     note = conn.execute("SELECT * FROM notes WHERE id = ?", (note_id,)).fetchone()
@@ -314,6 +386,7 @@ def notes_view(note_id: int):
 
 
 @app.route("/notes/<int:note_id>/edit", methods=["GET", "POST"])
+@login_required
 def notes_edit(note_id: int):
     conn = get_db()
     note = conn.execute("SELECT * FROM notes WHERE id = ?", (note_id,)).fetchone()
@@ -343,6 +416,7 @@ def notes_edit(note_id: int):
 
 
 @app.route("/notes/<int:note_id>/delete", methods=["POST"])
+@login_required
 def notes_delete(note_id: int):
     conn = get_db()
     conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))
@@ -354,6 +428,7 @@ def notes_delete(note_id: int):
 
 # API endpoints for notes (JSON)
 @app.route("/api/notes")
+@login_required
 def api_notes():
     conn = get_db()
     rows = conn.execute(
@@ -364,6 +439,7 @@ def api_notes():
 
 
 @app.route("/api/notes/<int:note_id>")
+@login_required
 def api_note(note_id: int):
     conn = get_db()
     row = conn.execute("SELECT * FROM notes WHERE id = ?", (note_id,)).fetchone()
@@ -378,6 +454,7 @@ def api_note(note_id: int):
 # ---------------------------------------------------------------------------
 
 @app.route("/performance")
+@login_required
 def performance():
     """Render the real-time performance dashboard."""
     profile = auto_tune()
@@ -394,6 +471,7 @@ def performance():
 # ---------------------------------------------------------------------------
 
 @app.route("/api/performance/metrics")
+@login_required
 def api_performance_metrics():
     """Return the latest performance snapshot as JSON."""
     monitor = get_monitor()
@@ -404,6 +482,7 @@ def api_performance_metrics():
 
 
 @app.route("/api/performance/history")
+@login_required
 def api_performance_history():
     """Return recent performance history (last N snapshots)."""
     monitor = get_monitor()
@@ -414,6 +493,7 @@ def api_performance_history():
 
 
 @app.route("/api/performance/snapshot", methods=["POST"])
+@login_required
 def api_performance_snapshot():
     """Force an immediate metric collection and return it."""
     monitor = get_monitor()
@@ -422,6 +502,7 @@ def api_performance_snapshot():
 
 
 @app.route("/api/performance/profile")
+@login_required
 def api_performance_profile():
     """Return the auto-detected hardware profile and raw hardware info."""
     profile = auto_tune()

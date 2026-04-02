@@ -24,6 +24,8 @@ services:
       - "${APP_PORT:-5000}:5000"
     environment:
       - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
+      - ADMIN_PASSWORD_HASH=${ADMIN_PASSWORD_HASH}
       - OLLAMA_URL=http://ollama:11434
       - KIWIX_URL=http://kiwix:8080
       - MAPS_TILE_URL=${MAPS_TILE_URL:-/tiles/{z}/{x}/{y}.png}
