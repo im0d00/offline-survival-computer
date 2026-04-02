@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Inventory – Offline Survival Computer{% endblock %}
+{% block header %}Inventory{% endblock %}
+
+{% block content %}
+<div class="card bg-dark border-secondary mb-3">
+  <div class="card-body">
+    <h6 class="text-muted mb-3">Add Item</h6>
+    <form method="post" action="{{ url_for('inventory_add') }}" class="row g-2">
+      <div class="col-md-4">
+        <input type="text" name="name" placeholder="Item name" class="form-control bg-dark text-white border-secondary" required>
+      </div>
+      <div class="col-md-2">
+        <input type="number" name="quantity" placeholder="Qty" class="form-control bg-dark text-white border-secondary" min="0" value="1">
+      </div>
+      <div class="col-md-2">
+        <input type="text" name="category" placeholder="Category" class="form-control bg-dark text-white border-secondary">
+      </div>
+      <div class="col-md-2">
+        <input type="text" name="location" placeholder="Location" class="form-control bg-dark text-white border-secondary">
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-success w-100" type="submit"><i class="bi bi-plus-circle me-1"></i>Add</button>
+      </div>
+      <div class="col-12">
+        <input type="text" name="notes" placeholder="Notes" class="form-control bg-dark text-white border-secondary">
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if items %}
+<div class="table-responsive">
+  <table class="table table-dark table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Qty</th>
+        <th>Category</th>
+        <th>Location</th>
+        <th>Updated</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in items %}
+      <tr>
+        <td>{{ item.name }}</td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ item.category }}</td>
+        <td>{{ item.location }}</td>
+        <td>{{ item.updated }}</td>
+        <td class="text-end">
+          <form method="post" action="{{ url_for('inventory_edit', item_id=item.id) }}" class="d-inline-flex gap-2">
+            <input type="hidden" name="name" value="{{ item.name }}">
+            <input type="hidden" name="quantity" value="{{ item.quantity }}">
+            <input type="hidden" name="category" value="{{ item.category }}">
+            <input type="hidden" name="location" value="{{ item.location }}">
+            <input type="hidden" name="notes" value="{{ item.notes }}">
+            <button class="btn btn-sm btn-outline-secondary" type="submit"><i class="bi bi-pencil"></i></button>
+          </form>
+          <form method="post" action="{{ url_for('inventory_delete', item_id=item.id) }}" class="d-inline">
+            <button class="btn btn-sm btn-outline-danger" type="submit"><i class="bi bi-trash"></i></button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-secondary">No inventory items recorded.</div>
+{% endif %}
+{% endblock %}

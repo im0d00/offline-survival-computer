@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}System – Offline Survival Computer{% endblock %}
+{% block header %}System Monitor{% endblock %}
+
+{% block content %}
+<div class="card bg-dark border-secondary">
+  <div class="card-body">
+    <h6 class="text-muted">Live System Metrics</h6>
+    <pre id="systemData" class="bg-black text-success p-3 rounded small mb-0">Loading…</pre>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+fetch("{{ url_for('system_info') }}")
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById("systemData").textContent = JSON.stringify(data, null, 2);
+  })
+  .catch(() => {
+    document.getElementById("systemData").textContent = "Unable to load system metrics.";
+  });
+</script>
+{% endblock %}

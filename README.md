@@ -16,6 +16,12 @@ Access a central **Command Center** web dashboard from any browser on your netwo
 | 🎓 **Education** | Khan Academy, Wikibooks, TED Talks and more — all offline via Kiwix |
 | 🗺️ **Offline Maps** | Interactive maps with OpenStreetMap tiles (supports fully offline tile cache) |
 | 📝 **Notes** | Simple, searchable note-taking with tags — stored locally in SQLite |
+| 🔐 **Authentication** | Built-in admin login (defaults: `admin` / `offline`, override via `ADMIN_USERNAME` / `ADMIN_PASSWORD`) |
+| 📁 **File Manager** | Upload, download, and delete files stored on the device |
+| 💾 **Backup & Restore** | Export/import a `.tar.gz` snapshot of notes, uploads, documents, and maps |
+| 📊 **System Monitor** | CPU, RAM, disk usage and service health, plus a system page |
+| 🧭 **Survival Tools** | Water treatment, calorie planning, medication dosing, and fire-starting helpers |
+| 📦 **Inventory** | Track supplies with quantity, category, and location metadata |
 
 ---
 
@@ -134,6 +140,9 @@ OLLAMA_PORT=11434
 
 # Maps tile URL (blank = live OSM, or point to local tile server)
 MAPS_TILE_URL=/tiles/{z}/{x}/{y}.png
+# Admin credentials (override defaults of admin/offline)
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=change-me
 ```
 
 ---

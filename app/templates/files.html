@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Files – Offline Survival Computer{% endblock %}
+{% block header %}File Manager{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h6 class="text-muted mb-0">Uploads Directory</h6>
+  <form method="post" action="{{ url_for('upload_file') }}" enctype="multipart/form-data" class="d-flex gap-2">
+    <input type="file" name="file" class="form-control form-control-sm bg-dark text-white border-secondary" required>
+    <button class="btn btn-sm btn-primary" type="submit"><i class="bi bi-cloud-upload me-1"></i>Upload</button>
+  </form>
+</div>
+
+{% if files %}
+<div class="table-responsive">
+  <table class="table table-dark table-striped align-middle">
+    <thead>
+      <tr>
+        <th>Filename</th>
+        <th>Size</th>
+        <th>Modified</th>
+        <th class="text-end">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in files %}
+      <tr>
+        <td>{{ f.name }}</td>
+        <td>{{ (f.size / 1024)|round(1) }} KB</td>
+        <td>{{ f.modified.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+        <td class="text-end">
+          <a class="btn btn-sm btn-outline-info" href="{{ url_for('download_file', filename=f.name) }}">
+            <i class="bi bi-download"></i>
+          </a>
+          <form method="post" action="{{ url_for('delete_file', filename=f.name) }}" class="d-inline">
+            <button class="btn btn-sm btn-outline-danger" type="submit">
+              <i class="bi bi-trash"></i>
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="alert alert-secondary">No files uploaded yet.</div>
+{% endif %}
+{% endblock %}

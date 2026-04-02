@@ -66,6 +66,24 @@
           <i class="bi bi-speedometer2 me-2"></i>Performance
         </a>
       </li>
+      <li class="nav-item">
+        <a href="{{ url_for('files') }}"
+           class="nav-link {{ 'active' if request.endpoint == 'files' }}">
+          <i class="bi bi-folder2-open me-2"></i>Files
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('inventory') }}"
+           class="nav-link {{ 'active' if request.endpoint == 'inventory' }}">
+          <i class="bi bi-box-seam me-2"></i>Inventory
+        </a>
+      </li>
+      <li class="nav-item">
+        <a href="{{ url_for('system_page') }}"
+           class="nav-link {{ 'active' if request.endpoint == 'system_page' }}">
+          <i class="bi bi-activity me-2"></i>System
+        </a>
+      </li>
     </ul>
     <div class="mt-auto text-muted small">
       <i class="bi bi-wifi-off me-1"></i>Offline-First &bull; Private
@@ -79,7 +97,15 @@
         <i class="bi bi-list"></i>
       </button>
       <h5 class="mb-0 text-white">{% block header %}{% endblock %}</h5>
-      <span class="badge bg-success"><i class="bi bi-hdd-fill me-1"></i>Offline</span>
+      <div class="d-flex align-items-center gap-2">
+        {% if current_user.is_authenticated %}
+        <span class="badge bg-secondary text-uppercase">{{ current_user.id }}</span>
+        <a class="btn btn-sm btn-outline-light" href="{{ url_for('logout') }}">
+          <i class="bi bi-box-arrow-right me-1"></i>Logout
+        </a>
+        {% endif %}
+        <span class="badge bg-success"><i class="bi bi-hdd-fill me-1"></i>Offline</span>
+      </div>
     </header>
 
     <main class="flex-grow-1 p-4 overflow-auto">
