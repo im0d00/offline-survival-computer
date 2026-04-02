@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+{% block title %}Offline Maps – Offline Survival Computer{% endblock %}
+{% block header %}Offline Maps{% endblock %}
+
+{% block head %}
+<link rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin="" />
+<style>
+  #map { height: 65vh; border-radius: .5rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3 mb-3">
+  <div class="col-sm-6 col-lg-4">
+    <div class="input-group input-group-sm">
+      <span class="input-group-text bg-dark text-muted border-secondary">
+        <i class="bi bi-search"></i>
+      </span>
+      <input type="text" id="searchInput" class="form-control bg-dark text-white border-secondary"
+             placeholder="Search for a place…" />
+      <button class="btn btn-outline-secondary" id="searchBtn">Go</button>
+    </div>
+  </div>
+  <div class="col-sm-6 col-lg-4">
+    <div class="input-group input-group-sm">
+      <span class="input-group-text bg-dark text-muted border-secondary">
+        <i class="bi bi-pin-map"></i>
+      </span>
+      <input type="text" id="coordInput" class="form-control bg-dark text-white border-secondary"
+             placeholder="Lat, Lon  e.g. 51.505, -0.09" />
+      <button class="btn btn-outline-secondary" id="coordBtn">Jump</button>
+    </div>
+  </div>
+  <div class="col-sm-12 col-lg-4 d-flex gap-2">
+    <button class="btn btn-sm btn-outline-secondary flex-grow-1" id="locateBtn">
+      <i class="bi bi-crosshair me-1"></i>My Location
+    </button>
+    <button class="btn btn-sm btn-outline-warning flex-grow-1" id="addMarkerBtn">
+      <i class="bi bi-pin-angle me-1"></i>Add Marker
+    </button>
+  </div>
+</div>
+
+<div id="map"></div>
+
+<!-- Marker list -->
+<div class="mt-3">
+  <h6 class="text-muted small">Saved Markers</h6>
+  <ul id="markerList" class="list-group list-group-flush">
+    <li class="list-group-item bg-dark text-muted small" id="noMarkers">No markers yet.</li>
+  </ul>
+</div>
+
+<!-- Offline tiles info -->
+<div class="card bg-dark border-secondary mt-4">
+  <div class="card-body small text-muted">
+    <h6 class="text-white"><i class="bi bi-info-circle me-2"></i>Offline Tile Setup</h6>
+    <p class="mb-2">
+      By default this map uses OpenStreetMap tiles (requires internet). For fully offline use,
+      download tiles using <strong>SAS Planet</strong>, <strong>MOBAC</strong>, or
+      <strong>wget</strong> and place them at <code>data/maps/tiles/{z}/{x}/{y}.png</code>.
+      Then update <code>MAPS_TILE_URL</code> in your <code>.env</code> file.
+    </p>
+    <p class="mb-0">
+      Alternatively, serve MBTiles with a local tile server like
+      <a href="https://github.com/mapbox/tilelive" target="_blank" rel="noopener"
+         class="text-info">TileServer GL</a> and point
+      <code>MAPS_TILE_URL</code> to it.
+    </p>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV/XN/TAbg="
+        crossorigin=""></script>
+<script>
+(function () {
+  "use strict";
+
+  const tileUrl = {{ tile_url | tojson }};
+
+  // Use OpenStreetMap as fallback if custom tile URL looks like a placeholder
+  const effectiveTileUrl = (tileUrl && !tileUrl.includes("{z}"))
+    ? "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+    : (tileUrl || "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png");
+
+  const map = L.map("map").setView([20, 0], 2);
+
+  L.tileLayer(effectiveTileUrl, {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
+  }).addTo(map);
+
+  const markerList = document.getElementById("markerList");
+  const noMarkers = document.getElementById("noMarkers");
+  const savedMarkers = [];
+
+  // Load markers from localStorage
+  const stored = JSON.parse(localStorage.getItem("survivalpc_markers") || "[]");
+  stored.forEach(function (m) { addMarker(m.lat, m.lng, m.label, false); });
+
+  function saveMarkers() {
+    const data = savedMarkers.map(function (m) {
+      return { lat: m.latlng.lat, lng: m.latlng.lng, label: m.label };
+    });
+    localStorage.setItem("survivalpc_markers", JSON.stringify(data));
+  }
+
+  function addMarker(lat, lng, label, save) {
+    if (save === undefined) save = true;
+    const marker = L.marker([lat, lng]).addTo(map);
+    marker.bindPopup(label || ("Marker @ " + lat.toFixed(4) + ", " + lng.toFixed(4)));
+    savedMarkers.push({ latlng: { lat, lng }, label, _marker: marker });
+
+    if (noMarkers) noMarkers.style.display = "none";
+    const li = document.createElement("li");
+    li.className = "list-group-item bg-dark text-white d-flex justify-content-between align-items-center py-2";
+    li.innerHTML = `<span><i class="bi bi-pin-map-fill me-2 text-danger"></i>${escapeHtml(label || (lat.toFixed(4) + ", " + lng.toFixed(4)))}</span>
+      <div class="d-flex gap-2">
+        <button class="btn btn-link btn-sm text-info p-0 goto-btn">Go</button>
+        <button class="btn btn-link btn-sm text-danger p-0 del-btn">✕</button>
+      </div>`;
+    li.querySelector(".goto-btn").addEventListener("click", function () {
+      map.setView([lat, lng], 14);
+      marker.openPopup();
+    });
+    li.querySelector(".del-btn").addEventListener("click", function () {
+      map.removeLayer(marker);
+      savedMarkers.splice(savedMarkers.indexOf(savedMarkers.find(function(m){ return m._marker === marker; })), 1);
+      li.remove();
+      if (!savedMarkers.length && noMarkers) noMarkers.style.display = "";
+      saveMarkers();
+    });
+    markerList.appendChild(li);
+    if (save) saveMarkers();
+  }
+
+  // Add marker mode
+  let addMode = false;
+  const addMarkerBtn = document.getElementById("addMarkerBtn");
+  addMarkerBtn.addEventListener("click", function () {
+    addMode = !addMode;
+    addMarkerBtn.classList.toggle("btn-warning", !addMode);
+    addMarkerBtn.classList.toggle("btn-danger", addMode);
+    addMarkerBtn.innerHTML = addMode
+      ? '<i class="bi bi-x-circle me-1"></i>Cancel'
+      : '<i class="bi bi-pin-angle me-1"></i>Add Marker';
+    map.getContainer().style.cursor = addMode ? "crosshair" : "";
+  });
+
+  map.on("click", function (e) {
+    if (!addMode) return;
+    const label = prompt("Marker label (optional):", "");
+    addMarker(e.latlng.lat, e.latlng.lng, label || "");
+    addMode = false;
+    addMarkerBtn.classList.remove("btn-danger");
+    addMarkerBtn.classList.add("btn-warning");
+    addMarkerBtn.innerHTML = '<i class="bi bi-pin-angle me-1"></i>Add Marker';
+    map.getContainer().style.cursor = "";
+  });
+
+  // Geolocation
+  document.getElementById("locateBtn").addEventListener("click", function () {
+    if (!navigator.geolocation) { alert("Geolocation not supported."); return; }
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      map.setView([pos.coords.latitude, pos.coords.longitude], 14);
+    }, function () {
+      alert("Could not determine your location.");
+    });
+  });
+
+  // Coordinate jump
+  document.getElementById("coordBtn").addEventListener("click", function () {
+    const val = document.getElementById("coordInput").value.trim();
+    const parts = val.split(",").map(Number);
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      map.setView([parts[0], parts[1]], 12);
+    } else {
+      alert("Invalid coordinates. Use format: lat, lon");
+    }
+  });
+
+  // Nominatim geocoding search (online only)
+  document.getElementById("searchBtn").addEventListener("click", function () {
+    const q = document.getElementById("searchInput").value.trim();
+    if (!q) return;
+    fetch("https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(q) + "&format=json&limit=1", {
+      headers: { "Accept-Language": "en" }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        if (!data.length) { alert("Place not found."); return; }
+        map.setView([data[0].lat, data[0].lon], 12);
+      })
+      .catch(function () { alert("Search requires an internet connection."); });
+  });
+
+  document.getElementById("searchInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") document.getElementById("searchBtn").click();
+  });
+  document.getElementById("coordInput").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") document.getElementById("coordBtn").click();
+  });
+
+  function escapeHtml(text) {
+    const d = document.createElement("div");
+    d.textContent = text;
+    return d.innerHTML;
+  }
+})();
+</script>
+{% endblock %}

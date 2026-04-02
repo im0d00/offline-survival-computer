@@ -1,0 +1,86 @@
+version: "3.9"
+
+# ============================================================
+# Offline Survival Computer – Docker Compose
+# ============================================================
+# Services:
+#   app     – Flask Command Center (port 5000)
+#   kiwix   – Offline content server (port 8080)
+#   ollama  – Local LLM API (port 11434)
+# ============================================================
+
+services:
+
+  # ----------------------------------------------------------
+  # Command Center web application
+  # ----------------------------------------------------------
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    container_name: survivalpc-app
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-5000}:5000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - OLLAMA_URL=http://ollama:11434
+      - KIWIX_URL=http://kiwix:8080
+      - MAPS_TILE_URL=${MAPS_TILE_URL:-/tiles/{z}/{x}/{y}.png}
+    volumes:
+      - ./data/notes:/srv/app/data/notes
+      - ./data/uploads:/srv/app/data/uploads
+      - ./data/documents:/srv/app/data/documents
+      - ./data/maps:/srv/app/data/maps
+    depends_on:
+      - ollama
+      - kiwix
+    networks:
+      - survivalnet
+
+  # ----------------------------------------------------------
+  # Kiwix – offline content server
+  # Serves .zim files placed in data/zim/
+  # ----------------------------------------------------------
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:latest
+    container_name: survivalpc-kiwix
+    restart: unless-stopped
+    ports:
+      - "${KIWIX_PORT:-8080}:8080"
+    volumes:
+      - ./data/zim:/data
+    command: --port 8080 /data
+    networks:
+      - survivalnet
+
+  # ----------------------------------------------------------
+  # Ollama – local LLM engine
+  # Pull models with: docker compose exec ollama ollama pull llama3
+  # ----------------------------------------------------------
+  ollama:
+    image: ollama/ollama:latest
+    container_name: survivalpc-ollama
+    restart: unless-stopped
+    ports:
+      - "${OLLAMA_PORT:-11434}:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - survivalnet
+    # Uncomment the following lines to enable GPU acceleration (NVIDIA):
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+
+networks:
+  survivalnet:
+    driver: bridge
+
+volumes:
+  ollama_data:
+    driver: local

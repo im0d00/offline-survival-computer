@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Library – Offline Survival Computer{% endblock %}
+{% block header %}Information Library{% endblock %}
+
+{% block content %}
+<p class="text-muted">
+  The library is powered by <strong>Kiwix</strong>, which serves offline
+  <code>.zim</code> archives — including Wikipedia, Wikibooks, medical references,
+  and survival guides — directly from your local machine.
+</p>
+
+<div class="row g-4 mb-4">
+  <!-- Wikipedia -->
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-wikipedia me-2 text-info"></i>Wikipedia</h5>
+        <p class="card-text text-muted small">
+          Full offline encyclopedia. Download the English Wikipedia
+          <code>.zim</code> (≈ 90 GB with images, or 20 GB text-only) and place it in
+          <code>data/zim/</code>.
+        </p>
+        <a href="{{ kiwix_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline-info btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in Kiwix
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Medical -->
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-heart-pulse-fill me-2 text-danger"></i>Medical Reference</h5>
+        <p class="card-text text-muted small">
+          Offline first aid and medical guides. Recommended ZIM files:
+          <em>WikiMed Medical Encyclopedia</em> and <em>Where There Is No Doctor</em>.
+        </p>
+        <a href="{{ kiwix_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in Kiwix
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Survival Guides -->
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-tree-fill me-2 text-success"></i>Survival Guides</h5>
+        <p class="card-text text-muted small">
+          Wikibooks survival content and WikiVoyage travel guides. Download
+          <em>Wikibooks</em> and <em>WikiVoyage</em> ZIM files.
+        </p>
+        <a href="{{ kiwix_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline-success btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in Kiwix
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Project Gutenberg -->
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-journal-bookmark-fill me-2 text-warning"></i>Project Gutenberg</h5>
+        <p class="card-text text-muted small">
+          Over 60,000 free eBooks. Download the Gutenberg ZIM file for offline
+          reading of classic literature and reference texts.
+        </p>
+        <a href="{{ kiwix_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline-warning btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in Kiwix
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stack Overflow -->
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-stack-overflow me-2 text-primary"></i>Stack Overflow</h5>
+        <p class="card-text text-muted small">
+          Offline developer Q&amp;A. Download the Stack Overflow ZIM for
+          technical problem-solving without internet access.
+        </p>
+        <a href="{{ kiwix_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in Kiwix
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Wikiquote / Inspirational -->
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-quote me-2 text-secondary"></i>Add More Content</h5>
+        <p class="card-text text-muted small">
+          Browse <a href="https://library.kiwix.org" target="_blank" rel="noopener"
+          class="text-secondary">library.kiwix.org</a> to find and download more ZIM files,
+          then place them in <code>data/zim/</code> and restart Kiwix.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- How to Add Content -->
+<div class="card bg-dark border-warning">
+  <div class="card-body">
+    <h6 class="text-warning"><i class="bi bi-info-circle-fill me-2"></i>How to Add ZIM Content</h6>
+    <ol class="text-muted mb-0 small">
+      <li>Visit <a href="https://library.kiwix.org" target="_blank" rel="noopener"
+          class="text-info">library.kiwix.org</a> while online.</li>
+      <li>Download the <code>.zim</code> file(s) you want.</li>
+      <li>Place them in the <code>data/zim/</code> directory of this project.</li>
+      <li>Restart the Kiwix container: <code>docker compose restart kiwix</code></li>
+      <li>Click <strong>Open in Kiwix</strong> above to browse the content.</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}

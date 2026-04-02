@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}{{ note.title }} – Notes – Offline Survival Computer{% endblock %}
+{% block header %}{{ note.title }}{% endblock %}
+
+{% block content %}
+<div class="mb-3 d-flex gap-2 flex-wrap">
+  <a href="{{ url_for('notes_edit', note_id=note.id) }}" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-pencil me-1"></i>Edit
+  </a>
+  <form method="post" action="{{ url_for('notes_delete', note_id=note.id) }}"
+        onsubmit="return confirm('Delete this note?')" class="d-inline">
+    <button type="submit" class="btn btn-sm btn-outline-danger">
+      <i class="bi bi-trash me-1"></i>Delete
+    </button>
+  </form>
+  <a href="{{ url_for('notes') }}" class="btn btn-sm btn-outline-secondary ms-auto">
+    <i class="bi bi-arrow-left me-1"></i>Back to Notes
+  </a>
+</div>
+
+{% if note.tags %}
+<div class="mb-3">
+  {% for tag in note.tags.split(',') %}
+    {% set tag = tag.strip() %}
+    {% if tag %}
+    <span class="badge bg-secondary me-1">{{ tag }}</span>
+    {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="card bg-dark border-secondary">
+  <div class="card-body">
+    <pre class="text-white mb-0" style="white-space:pre-wrap; word-break:break-word; font-family:inherit">{{ note.content }}</pre>
+  </div>
+</div>
+
+<p class="text-muted small mt-2">
+  Created: {{ note.created[:10] }} &bull; Updated: {{ note.updated[:10] }}
+</p>
+{% endblock %}

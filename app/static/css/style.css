@@ -1,0 +1,139 @@
+/* =========================================================
+   Offline Survival Computer – Global Stylesheet
+   ========================================================= */
+
+:root {
+  --sidebar-width: 220px;
+  --bg-dark: #0d1117;
+  --bg-card: #161b22;
+  --border-color: #30363d;
+}
+
+/* Layout */
+html, body {
+  height: 100%;
+  margin: 0;
+  background-color: var(--bg-dark);
+  color: #e6edf3;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#wrapper {
+  min-height: 100vh;
+}
+
+/* Sidebar */
+#sidebar {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  background-color: #0d1117 !important;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+#sidebar .nav-link {
+  color: #8b949e;
+  border-radius: 6px;
+  font-size: .875rem;
+  padding: .45rem .75rem;
+  transition: background-color .15s, color .15s;
+}
+
+#sidebar .nav-link:hover,
+#sidebar .nav-link.active {
+  background-color: #1f2937;
+  color: #e6edf3;
+}
+
+#sidebar .nav-link.active {
+  background-color: #238636;
+  color: #fff;
+}
+
+/* Page content */
+#page-content {
+  min-width: 0;
+  background-color: var(--bg-dark);
+}
+
+header {
+  background-color: #0d1117 !important;
+  min-height: 52px;
+}
+
+main {
+  min-height: calc(100vh - 52px);
+}
+
+/* Cards */
+.card {
+  background-color: var(--bg-card) !important;
+  border-color: var(--border-color) !important;
+}
+
+.module-card {
+  transition: transform .15s, box-shadow .15s;
+}
+
+.module-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 16px rgba(0,0,0,.4);
+  border-color: #58a6ff !important;
+}
+
+/* Forms */
+.form-control,
+.form-select {
+  background-color: #0d1117;
+  border-color: var(--border-color);
+  color: #e6edf3;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: #0d1117;
+  border-color: #388bfd;
+  color: #e6edf3;
+  box-shadow: 0 0 0 .25rem rgba(56,139,253,.2);
+}
+
+.form-control::placeholder {
+  color: #8b949e;
+}
+
+/* Alerts */
+.alert-success { background-color: #0f2218; border-color: #238636; color: #3fb950; }
+.alert-danger  { background-color: #2d0f0f; border-color: #da3633; color: #f85149; }
+.alert-warning { background-color: #2d1e0f; border-color: #9e6a03; color: #d29922; }
+.alert-info    { background-color: #0d2033; border-color: #1f6feb; color: #58a6ff; }
+
+/* Code blocks */
+code {
+  background-color: #161b22;
+  border: 1px solid var(--border-color);
+  padding: .15em .4em;
+  border-radius: 4px;
+  font-size: .85em;
+  color: #f0883e;
+}
+
+/* Chat bubbles */
+#chatMessages {
+  background-color: #0d1117;
+  border-radius: .375rem;
+}
+
+/* Mobile sidebar toggle */
+@media (max-width: 768px) {
+  #sidebar {
+    position: fixed;
+    z-index: 1040;
+    transform: translateX(-100%);
+    transition: transform .25s;
+  }
+  #sidebar.show {
+    transform: translateX(0);
+  }
+}

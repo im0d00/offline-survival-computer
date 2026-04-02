@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.env
+venv/
+env/
+.venv/
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data directories (user-generated, not source code)
+data/notes/
+data/uploads/
+data/documents/
+data/maps/tiles/
+data/zim/
+
+# Keep the data directory stubs
+!data/.gitkeep
+!data/notes/.gitkeep
+!data/uploads/.gitkeep
+!data/documents/.gitkeep
+!data/maps/.gitkeep
+!data/zim/.gitkeep
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
