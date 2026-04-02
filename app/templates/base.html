@@ -4,6 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}Offline Survival Computer{% endblock %}</title>
+
+  <!-- PWA Support -->
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}" />
+  <meta name="theme-color" content="#238636" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="SurvivalPC" />
+
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <!-- Bootstrap 5 (local fallback – bundled in Docker image) -->
   <link rel="stylesheet"
@@ -108,6 +116,22 @@
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc4s9bIOgUxi8T/jzmQ+kqjkBU3bZIjwqHbJMG+SPXWY"
         crossorigin="anonymous"></script>
 <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+<!-- Service Worker Registration -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/static/sw.js')
+        .then((registration) => {
+          console.log('ServiceWorker registered:', registration.scope);
+        })
+        .catch((error) => {
+          console.log('ServiceWorker registration failed:', error);
+        });
+    });
+  }
+</script>
+
 {% block scripts %}{% endblock %}
 </body>
 </html>
