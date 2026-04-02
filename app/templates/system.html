@@ -1,0 +1,233 @@
+{% extends "base.html" %}
+{% block title %}System Monitor – Offline Survival Computer{% endblock %}
+{% block header %}System Monitor{% endblock %}
+
+{% block head %}
+<style>
+  .gauge-container {
+    position: relative;
+    margin-bottom: 1rem;
+  }
+  .gauge-label {
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+  }
+  .gauge-value {
+    text-align: center;
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-top: 0.5rem;
+  }
+  .progress {
+    height: 2rem;
+  }
+  .service-dot {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 8px;
+  }
+  .service-dot.up {
+    background-color: #3fb950;
+    box-shadow: 0 0 8px #3fb950;
+  }
+  .service-dot.down {
+    background-color: #f85149;
+    box-shadow: 0 0 8px #f85149;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-4 mb-4">
+  <!-- System Resources -->
+  <div class="col-lg-8">
+    <div class="card bg-dark border-secondary">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="bi bi-cpu me-2"></i>System Resources
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-4">
+          <!-- CPU -->
+          <div class="col-md-4">
+            <div class="gauge-container">
+              <div class="gauge-label text-white">CPU Usage</div>
+              <div class="progress">
+                <div id="cpuBar" class="progress-bar bg-info progress-bar-striped" role="progressbar" style="width: 0%"></div>
+              </div>
+              <div id="cpuValue" class="gauge-value text-info">0%</div>
+            </div>
+          </div>
+
+          <!-- RAM -->
+          <div class="col-md-4">
+            <div class="gauge-container">
+              <div class="gauge-label text-white">RAM Usage</div>
+              <div class="progress">
+                <div id="ramBar" class="progress-bar bg-warning progress-bar-striped" role="progressbar" style="width: 0%"></div>
+              </div>
+              <div id="ramValue" class="gauge-value text-warning">0%</div>
+              <div class="text-center text-muted small" id="ramDetails">0 MB / 0 MB</div>
+            </div>
+          </div>
+
+          <!-- Disk -->
+          <div class="col-md-4">
+            <div class="gauge-container">
+              <div class="gauge-label text-white">Disk Usage</div>
+              <div class="progress">
+                <div id="diskBar" class="progress-bar bg-danger progress-bar-striped" role="progressbar" style="width: 0%"></div>
+              </div>
+              <div id="diskValue" class="gauge-value text-danger">0%</div>
+              <div class="text-center text-muted small" id="diskDetails">0 GB / 0 GB</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Services Status -->
+  <div class="col-lg-4">
+    <div class="card bg-dark border-secondary">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="bi bi-server me-2"></i>Services
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="mb-3">
+          <span class="service-dot" id="kiwixDot"></span>
+          <span class="text-white">Kiwix Library</span>
+          <span class="badge bg-secondary float-end" id="kiwixStatus">Checking...</span>
+        </div>
+        <div class="mb-3">
+          <span class="service-dot" id="ollamaDot"></span>
+          <span class="text-white">Ollama AI</span>
+          <span class="badge bg-secondary float-end" id="ollamaStatus">Checking...</span>
+        </div>
+        <hr class="border-secondary" />
+        <div class="text-center">
+          <small class="text-muted">System Uptime</small>
+          <div class="text-white fw-bold" id="uptime">--</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Data Volumes -->
+<div class="row g-4">
+  <div class="col-12">
+    <div class="card bg-dark border-secondary">
+      <div class="card-header">
+        <h6 class="mb-0">
+          <i class="bi bi-hdd me-2"></i>Data Volumes
+        </h6>
+      </div>
+      <div class="card-body">
+        <div class="row g-3">
+          <div class="col-md-4">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-book-fill fs-4 text-info me-3"></i>
+              <div>
+                <div class="text-white">Kiwix Content (ZIM files)</div>
+                <div class="text-muted">{{ "%.2f"|format(volumes.zim_mb) }} MB</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-file-earmark-text fs-4 text-warning me-3"></i>
+              <div>
+                <div class="text-white">AI Documents</div>
+                <div class="text-muted">{{ "%.2f"|format(volumes.docs_mb) }} MB</div>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex align-items-center">
+              <i class="bi bi-cloud-upload fs-4 text-primary me-3"></i>
+              <div>
+                <div class="text-white">Uploaded Files</div>
+                <div class="text-muted">{{ "%.2f"|format(volumes.uploads_mb) }} MB</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Auto-refresh system metrics every 5 seconds
+  let refreshInterval;
+
+  function updateSystemMetrics() {
+    fetch('/system')
+      .then(response => response.json())
+      .then(data => {
+        // Update CPU
+        document.getElementById('cpuBar').style.width = data.cpu_percent + '%';
+        document.getElementById('cpuValue').textContent = data.cpu_percent.toFixed(1) + '%';
+
+        // Update RAM
+        document.getElementById('ramBar').style.width = data.ram_percent + '%';
+        document.getElementById('ramValue').textContent = data.ram_percent.toFixed(1) + '%';
+        document.getElementById('ramDetails').textContent =
+          Math.round(data.ram_used_mb) + ' MB / ' + Math.round(data.ram_total_mb) + ' MB';
+
+        // Update Disk
+        document.getElementById('diskBar').style.width = data.disk_percent + '%';
+        document.getElementById('diskValue').textContent = data.disk_percent.toFixed(1) + '%';
+        document.getElementById('diskDetails').textContent =
+          data.disk_used_gb.toFixed(1) + ' GB / ' + data.disk_total_gb.toFixed(1) + ' GB';
+
+        // Update services
+        updateServiceStatus('kiwix', data.services.kiwix);
+        updateServiceStatus('ollama', data.services.ollama);
+
+        // Update uptime
+        const hours = Math.floor(data.uptime_seconds / 3600);
+        const minutes = Math.floor((data.uptime_seconds % 3600) / 60);
+        document.getElementById('uptime').textContent = hours + 'h ' + minutes + 'm';
+      })
+      .catch(error => {
+        console.error('Failed to fetch system metrics:', error);
+      });
+  }
+
+  function updateServiceStatus(service, isUp) {
+    const dot = document.getElementById(service + 'Dot');
+    const status = document.getElementById(service + 'Status');
+
+    if (isUp) {
+      dot.className = 'service-dot up';
+      status.textContent = 'Running';
+      status.className = 'badge bg-success float-end';
+    } else {
+      dot.className = 'service-dot down';
+      status.textContent = 'Down';
+      status.className = 'badge bg-danger float-end';
+    }
+  }
+
+  // Start auto-refresh
+  updateSystemMetrics();
+  refreshInterval = setInterval(updateSystemMetrics, 5000);
+
+  // Clean up interval when leaving page
+  window.addEventListener('beforeunload', () => {
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+    }
+  });
+</script>
+{% endblock %}

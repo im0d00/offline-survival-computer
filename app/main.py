@@ -7,12 +7,14 @@ import sqlite3
 import datetime
 import tarfile
 import io
+import socket
 from pathlib import Path
 
 from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, send_file
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
+import psutil
 
 from core.performance_monitor import get_monitor, PerformanceMonitor
 from system.hardware_detector import auto_tune, get_hardware_info
@@ -131,6 +133,30 @@ def check_service(url: str, timeout: int = 2) -> bool:
         return r.status_code < 400
     except Exception:
         return False
+
+
+def check_port(host: str, port: int, timeout: float = 2) -> bool:
+    """Check if a port is open using socket."""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        result = sock.connect_ex((host, port))
+        sock.close()
+        return result == 0
+    except Exception:
+        return False
+
+
+def get_directory_size(path: Path) -> int:
+    """Get total size of a directory in bytes."""
+    total = 0
+    try:
+        for entry in path.rglob("*"):
+            if entry.is_file():
+                total += entry.stat().st_size
+    except Exception:
+        pass
+    return total
 
 
 # ---------------------------------------------------------------------------
@@ -650,6 +676,60 @@ def backup_restore():
         flash(f"An error occurred during restoration: {str(e)}", "danger")
 
     return redirect(url_for("index"))
+
+
+# ---------------------------------------------------------------------------
+# System Monitor
+# ---------------------------------------------------------------------------
+
+@app.route("/system")
+@login_required
+def system_api():
+    """Return system metrics as JSON."""
+    # Get CPU and memory info
+    cpu_percent = psutil.cpu_percent(interval=0.5)
+    memory = psutil.virtual_memory()
+    disk = psutil.disk_usage("/")
+
+    # Check service ports
+    services = {
+        "kiwix": check_port("kiwix", 8080, timeout=1),
+        "ollama": check_port("ollama", 11434, timeout=1),
+    }
+
+    # Get uptime
+    boot_time = psutil.boot_time()
+    uptime_seconds = datetime.datetime.now().timestamp() - boot_time
+
+    return jsonify({
+        "cpu_percent": cpu_percent,
+        "ram_used_mb": memory.used / 1024 / 1024,
+        "ram_total_mb": memory.total / 1024 / 1024,
+        "ram_percent": memory.percent,
+        "disk_used_gb": disk.used / 1024 / 1024 / 1024,
+        "disk_total_gb": disk.total / 1024 / 1024 / 1024,
+        "disk_percent": disk.percent,
+        "services": services,
+        "uptime_seconds": uptime_seconds,
+    })
+
+
+@app.route("/system/page")
+@login_required
+def system_page():
+    """Render system monitor page."""
+    # Get data volume sizes
+    zim_size = get_directory_size(DATA_DIR / "zim") if (DATA_DIR / "zim").exists() else 0
+    docs_size = get_directory_size(DOCS_DIR) if DOCS_DIR.exists() else 0
+    uploads_size = get_directory_size(UPLOADS_DIR) if UPLOADS_DIR.exists() else 0
+
+    volumes = {
+        "zim_mb": zim_size / 1024 / 1024,
+        "docs_mb": docs_size / 1024 / 1024,
+        "uploads_mb": uploads_size / 1024 / 1024,
+    }
+
+    return render_template("system.html", volumes=volumes)
 
 
 # ---------------------------------------------------------------------------
