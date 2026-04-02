@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Education – Offline Survival Computer{% endblock %}
+{% block header %}Education Platform{% endblock %}
+
+{% block content %}
+<p class="text-muted">
+  Offline educational content is served by <strong>Kiwix</strong>.
+  Download course ZIM files and access them without any internet connection.
+</p>
+
+<div class="row g-4 mb-4">
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-success h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-calculator-fill me-2 text-success"></i>Khan Academy</h5>
+        <p class="card-text text-muted small">
+          Math, science, computing, humanities, and more. Download the Khan Academy
+          ZIM (≈ 14 GB) for complete offline access to thousands of lessons.
+        </p>
+        <a href="{{ kiwix_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline-success btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in Kiwix
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-info h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-book-fill me-2 text-info"></i>Wikibooks</h5>
+        <p class="card-text text-muted small">
+          Free textbooks on hundreds of subjects — programming, mathematics,
+          cooking, engineering, and more.
+        </p>
+        <a href="{{ kiwix_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline-info btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in Kiwix
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-warning h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-youtube me-2 text-warning"></i>TED Talks</h5>
+        <p class="card-text text-muted small">
+          Offline access to inspiring TED Talks. Download the TED ZIM file for
+          video lectures on science, tech, design, and more.
+        </p>
+        <a href="{{ kiwix_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline-warning btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in Kiwix
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-code-slash me-2 text-primary"></i>Stack Overflow</h5>
+        <p class="card-text text-muted small">
+          Offline developer Q&amp;A. The Stack Overflow ZIM covers programming,
+          sysadmin, and technology topics.
+        </p>
+        <a href="{{ kiwix_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in Kiwix
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-translate me-2 text-danger"></i>Wikiversity</h5>
+        <p class="card-text text-muted small">
+          Open-content university learning. Wikiversity has courses, research, and
+          learning projects across every academic field.
+        </p>
+        <a href="{{ kiwix_url }}" target="_blank" rel="noopener"
+           class="btn btn-outline-danger btn-sm">
+          <i class="bi bi-box-arrow-up-right me-1"></i>Open in Kiwix
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card bg-dark border-secondary h-100">
+      <div class="card-body">
+        <h5 class="card-title"><i class="bi bi-plus-circle-fill me-2 text-secondary"></i>Add More Courses</h5>
+        <p class="card-text text-muted small">
+          Browse <a href="https://library.kiwix.org" target="_blank" rel="noopener"
+          class="text-info">library.kiwix.org</a> to find more educational ZIM files and
+          add them to <code>data/zim/</code>.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="card bg-dark border-success">
+  <div class="card-body">
+    <h6 class="text-success"><i class="bi bi-download me-2"></i>Recommended Download Sequence</h6>
+    <p class="text-muted small mb-2">
+      Download these ZIM files in order of priority for the best offline education experience:
+    </p>
+    <ol class="text-muted small mb-0">
+      <li><strong class="text-white">Khan Academy</strong> – most comprehensive free K-12 through university curriculum</li>
+      <li><strong class="text-white">Wikipedia (no images)</strong> – fastest download, huge reference value</li>
+      <li><strong class="text-white">Wikibooks</strong> – practical textbooks on every subject</li>
+      <li><strong class="text-white">Stack Overflow</strong> – indispensable for technical/programming questions</li>
+      <li><strong class="text-white">TED</strong> – video-based learning and inspiration</li>
+    </ol>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,257 @@
+{% extends "base.html" %}
+{% block title %}AI Assistant – Offline Survival Computer{% endblock %}
+{% block header %}AI Assistant{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+  <!-- Chat Panel -->
+  <div class="col-lg-8">
+    <div class="card bg-dark border-secondary h-100 d-flex flex-column">
+      <div class="card-header d-flex align-items-center gap-2 border-secondary">
+        <i class="bi bi-robot text-warning"></i>
+        <span class="fw-semibold">Chat</span>
+        <div class="ms-auto d-flex align-items-center gap-2">
+          <label for="modelSelect" class="form-label mb-0 small text-muted">Model:</label>
+          <select id="modelSelect" class="form-select form-select-sm bg-dark text-white border-secondary"
+                  style="width:auto">
+            {% if models %}
+              {% for m in models %}
+                <option value="{{ m }}">{{ m }}</option>
+              {% endfor %}
+            {% else %}
+              <option value="" disabled selected>No models – pull one first</option>
+            {% endif %}
+          </select>
+          <button class="btn btn-sm btn-outline-secondary" id="clearChatBtn" title="Clear conversation">
+            <i class="bi bi-trash"></i>
+          </button>
+        </div>
+      </div>
+      <div id="chatMessages" class="flex-grow-1 p-3 overflow-auto" style="min-height:400px; max-height:60vh">
+        <div class="text-center text-muted mt-5" id="emptyState">
+          <i class="bi bi-chat-dots display-4"></i>
+          <p class="mt-2">Ask me anything. I run entirely on your machine.</p>
+          {% if not models %}
+          <div class="alert alert-warning d-inline-block text-start mt-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            No Ollama models found. Run:<br>
+            <code>docker compose exec ollama ollama pull llama3</code>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      <div class="card-footer border-secondary">
+        <form id="chatForm" class="d-flex gap-2">
+          <textarea id="chatInput" class="form-control bg-dark text-white border-secondary"
+                    rows="2" placeholder="Type a message… (Shift+Enter for new line)"
+                    style="resize:none"></textarea>
+          <button type="submit" class="btn btn-warning align-self-end" id="sendBtn">
+            <i class="bi bi-send-fill"></i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar: Knowledge Base & Info -->
+  <div class="col-lg-4 d-flex flex-column gap-4">
+
+    <!-- Upload Document -->
+    <div class="card bg-dark border-secondary">
+      <div class="card-header border-secondary">
+        <i class="bi bi-file-earmark-arrow-up text-primary me-2"></i>
+        <span class="fw-semibold">Knowledge Base</span>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('ai_upload_document') }}"
+              enctype="multipart/form-data">
+          <div class="mb-3">
+            <label class="form-label small text-muted">Upload a document (PDF, TXT, MD, DOCX)</label>
+            <input class="form-control form-control-sm bg-dark text-white border-secondary"
+                   type="file" name="file" accept=".pdf,.txt,.md,.docx" required />
+          </div>
+          <button type="submit" class="btn btn-sm btn-outline-primary w-100">
+            <i class="bi bi-upload me-1"></i>Upload
+          </button>
+        </form>
+      </div>
+      {% if documents %}
+      <ul class="list-group list-group-flush border-top border-secondary">
+        {% for doc in documents %}
+        <li class="list-group-item bg-dark text-white d-flex justify-content-between align-items-center py-2 px-3">
+          <span class="text-truncate small" title="{{ doc.filename }}">
+            <i class="bi bi-file-earmark me-1 text-muted"></i>{{ doc.filename }}
+          </span>
+          <button class="btn btn-sm btn-link text-danger p-0 ms-2 delete-doc-btn"
+                  data-doc-id="{{ doc.id }}" title="Remove document">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="card-footer text-muted small border-secondary">
+        No documents yet. Upload files to reference them in your chats.
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Model Management Info -->
+    <div class="card bg-dark border-secondary">
+      <div class="card-header border-secondary">
+        <i class="bi bi-cpu text-warning me-2"></i>
+        <span class="fw-semibold">Model Management</span>
+      </div>
+      <div class="card-body small text-muted">
+        <p>Pull models using the command line:</p>
+        <code class="d-block bg-black text-success p-2 rounded mb-2">
+          docker compose exec ollama ollama pull llama3
+        </code>
+        <p class="mb-1">Recommended offline models:</p>
+        <ul class="mb-0 ps-3">
+          <li><code>llama3</code> – general purpose (4.7 GB)</li>
+          <li><code>mistral</code> – fast &amp; capable (4.1 GB)</li>
+          <li><code>phi3</code> – small but smart (2.3 GB)</li>
+          <li><code>gemma2:2b</code> – very light (1.6 GB)</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  const chatMessages = document.getElementById("chatMessages");
+  const chatForm = document.getElementById("chatForm");
+  const chatInput = document.getElementById("chatInput");
+  const modelSelect = document.getElementById("modelSelect");
+  const clearChatBtn = document.getElementById("clearChatBtn");
+  const emptyState = document.getElementById("emptyState");
+
+  // Conversation history for context
+  let history = [];
+
+  function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function addMessage(role, content) {
+    if (emptyState) emptyState.style.display = "none";
+
+    const wrapper = document.createElement("div");
+    wrapper.className = `d-flex mb-3 ${role === "user" ? "justify-content-end" : "justify-content-start"}`;
+
+    const bubble = document.createElement("div");
+    bubble.className = `px-3 py-2 rounded-3 ${role === "user" ? "bg-warning text-dark" : "bg-secondary text-white"}`;
+    bubble.style.maxWidth = "80%";
+    bubble.style.whiteSpace = "pre-wrap";
+    bubble.style.wordBreak = "break-word";
+    bubble.innerHTML = escapeHtml(content);
+
+    wrapper.appendChild(bubble);
+    chatMessages.appendChild(wrapper);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+
+  function addThinking() {
+    const wrapper = document.createElement("div");
+    wrapper.className = "d-flex mb-3 justify-content-start";
+    wrapper.id = "thinkingBubble";
+
+    const bubble = document.createElement("div");
+    bubble.className = "px-3 py-2 rounded-3 bg-secondary text-white";
+    bubble.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Thinking…';
+
+    wrapper.appendChild(bubble);
+    chatMessages.appendChild(wrapper);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    return wrapper;
+  }
+
+  chatForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const userText = chatInput.value.trim();
+    if (!userText) return;
+
+    const model = modelSelect.value;
+    if (!model) {
+      alert("No model selected. Please pull a model first.");
+      return;
+    }
+
+    chatInput.value = "";
+    addMessage("user", userText);
+
+    history.push({ role: "user", content: userText });
+
+    const thinking = addThinking();
+    chatForm.querySelector("button[type=submit]").disabled = true;
+
+    try {
+      const res = await fetch("{{ url_for('ai_chat') }}", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model, messages: history }),
+      });
+
+      thinking.remove();
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        addMessage("assistant", "Error: " + (err.error || res.statusText));
+      } else {
+        const data = await res.json();
+        const reply = data?.message?.content || data?.response || JSON.stringify(data);
+        history.push({ role: "assistant", content: reply });
+        addMessage("assistant", reply);
+      }
+    } catch (err) {
+      thinking.remove();
+      addMessage("assistant", "Network error: " + err.message);
+    } finally {
+      chatForm.querySelector("button[type=submit]").disabled = false;
+      chatInput.focus();
+    }
+  });
+
+  // Shift+Enter = new line; Enter = submit
+  chatInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      chatForm.dispatchEvent(new Event("submit", { cancelable: true }));
+    }
+  });
+
+  clearChatBtn.addEventListener("click", function () {
+    history = [];
+    chatMessages.innerHTML = "";
+    if (emptyState) {
+      chatMessages.appendChild(emptyState);
+      emptyState.style.display = "";
+    }
+  });
+
+  // Delete document buttons
+  document.querySelectorAll(".delete-doc-btn").forEach(function (btn) {
+    btn.addEventListener("click", async function () {
+      if (!confirm("Remove this document from the knowledge base?")) return;
+      const docId = this.dataset.docId;
+      const res = await fetch("/ai/document/" + docId, { method: "DELETE" });
+      if (res.ok) {
+        this.closest("li").remove();
+      } else {
+        alert("Failed to delete document.");
+      }
+    });
+  });
+})();
+</script>
+{% endblock %}
