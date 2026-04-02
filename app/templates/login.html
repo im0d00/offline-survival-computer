@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Sign In – Offline Survival Computer{% endblock %}
+{% block header %}Sign In{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-5">
+    <div class="card bg-dark border-secondary shadow-sm">
+      <div class="card-body">
+        <h5 class="card-title text-white mb-3">Administrator Login</h5>
+        <form method="post" action="{{ url_for('login') }}">
+          <div class="mb-3">
+            <label class="form-label text-muted">Username</label>
+            <input type="text" name="username" class="form-control bg-dark text-white border-secondary" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label text-muted">Password</label>
+            <input type="password" name="password" class="form-control bg-dark text-white border-secondary" required>
+          </div>
+          {% if error %}
+          <div class="alert alert-danger py-2">{{ error }}</div>
+          {% endif %}
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-box-arrow-in-right me-1"></i>Login
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
