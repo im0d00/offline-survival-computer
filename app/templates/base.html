@@ -69,6 +69,12 @@
         </a>
       </li>
       <li class="nav-item">
+        <a href="{{ url_for('files') }}"
+           class="nav-link {{ 'active' if request.endpoint == 'files' }}">
+          <i class="bi bi-folder-fill me-2"></i>Files
+        </a>
+      </li>
+      <li class="nav-item">
         <a href="{{ url_for('performance') }}"
            class="nav-link {{ 'active' if request.endpoint == 'performance' }}">
           <i class="bi bi-speedometer2 me-2"></i>Performance

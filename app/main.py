@@ -30,7 +30,7 @@ ALLOWED_EXTENSIONS = {"pdf", "txt", "md", "docx", "png", "jpg", "jpeg"}
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", "offline-survival-computer-secret-key")
-app.config["MAX_CONTENT_LENGTH"] = 100 * 1024 * 1024  # 100 MB max upload
+app.config["MAX_CONTENT_LENGTH"] = 500 * 1024 * 1024  # 500 MB max upload
 
 # Flask-Login setup
 login_manager = LoginManager()
@@ -447,6 +447,107 @@ def api_note(note_id: int):
     if row is None:
         return jsonify({"error": "Not found"}), 404
     return jsonify(dict(row))
+
+
+# ---------------------------------------------------------------------------
+# File Manager
+# ---------------------------------------------------------------------------
+
+@app.route("/files")
+@login_required
+def files():
+    """Display file manager page with uploads and documents."""
+    uploads = []
+    documents_list = []
+
+    # List uploads
+    if UPLOADS_DIR.exists():
+        for file_path in UPLOADS_DIR.iterdir():
+            if file_path.is_file():
+                stat = file_path.stat()
+                uploads.append({
+                    "name": file_path.name,
+                    "size": stat.st_size,
+                    "modified": datetime.datetime.fromtimestamp(stat.st_mtime, datetime.timezone.utc).strftime("%Y-%m-%d %H:%M"),
+                })
+
+    # List documents (AI knowledge base)
+    if DOCS_DIR.exists():
+        for file_path in DOCS_DIR.iterdir():
+            if file_path.is_file():
+                stat = file_path.stat()
+                documents_list.append({
+                    "name": file_path.name,
+                    "size": stat.st_size,
+                    "modified": datetime.datetime.fromtimestamp(stat.st_mtime, datetime.timezone.utc).strftime("%Y-%m-%d %H:%M"),
+                })
+
+    return render_template("files.html", uploads=uploads, documents=documents_list)
+
+
+@app.route("/files/upload", methods=["POST"])
+@login_required
+def files_upload():
+    """Handle file upload to uploads directory."""
+    if "file" not in request.files:
+        flash("No file selected.", "danger")
+        return redirect(url_for("files"))
+
+    file = request.files["file"]
+    if file.filename == "":
+        flash("No file selected.", "danger")
+        return redirect(url_for("files"))
+
+    filename = secure_filename(file.filename)
+    dest = UPLOADS_DIR / filename
+    file.save(dest)
+
+    flash(f"'{filename}' uploaded successfully.", "success")
+    return redirect(url_for("files"))
+
+
+@app.route("/files/download/<path:filename>")
+@login_required
+def files_download(filename: str):
+    """Download a file from uploads or documents."""
+    from flask import send_from_directory
+
+    filename = secure_filename(filename)
+
+    # Check uploads first
+    if (UPLOADS_DIR / filename).exists():
+        return send_from_directory(UPLOADS_DIR, filename, as_attachment=True)
+
+    # Then check documents
+    if (DOCS_DIR / filename).exists():
+        return send_from_directory(DOCS_DIR, filename, as_attachment=True)
+
+    flash("File not found.", "danger")
+    return redirect(url_for("files"))
+
+
+@app.route("/files/delete/<path:filename>", methods=["POST"])
+@login_required
+def files_delete(filename: str):
+    """Delete a file from uploads or documents."""
+    filename = secure_filename(filename)
+
+    # Check uploads first
+    upload_path = UPLOADS_DIR / filename
+    if upload_path.exists():
+        upload_path.unlink()
+        flash(f"'{filename}' deleted from uploads.", "info")
+        return redirect(url_for("files"))
+
+    # Then check documents
+    doc_path = DOCS_DIR / filename
+    if doc_path.exists():
+        doc_path.unlink()
+        flash(f"'{filename}' deleted from documents.", "info")
+        return redirect(url_for("files"))
+
+    flash("File not found.", "danger")
+    return redirect(url_for("files"))
 
 
 # ---------------------------------------------------------------------------

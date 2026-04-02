@@ -134,6 +134,20 @@
     </a>
   </div>
 
+  <div class="col-sm-6 col-lg-4">
+    <a href="{{ url_for('files') }}" class="text-decoration-none">
+      <div class="card bg-dark border-secondary h-100 module-card">
+        <div class="card-body text-center py-4">
+          <i class="bi bi-folder-fill display-4 text-primary mb-3"></i>
+          <h5 class="card-title text-white">Files</h5>
+          <p class="card-text text-muted small">
+            Upload and manage files with drag-and-drop support. Up to 500MB per file.
+          </p>
+        </div>
+      </div>
+    </a>
+  </div>
+
   {% if kiwix_url %}
   <div class="col-sm-6 col-lg-4">
     <a href="{{ kiwix_url }}" target="_blank" rel="noopener" class="text-decoration-none">
