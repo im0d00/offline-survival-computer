@@ -24,6 +24,7 @@ data/uploads/
 data/documents/
 data/maps/tiles/
 data/zim/
+app/data/
 
 # Keep the data directory stubs
 !data/.gitkeep
