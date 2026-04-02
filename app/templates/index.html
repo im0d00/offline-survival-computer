@@ -166,6 +166,51 @@
 
 </div>
 
+<!-- Backup & Restore Section -->
+<div class="mt-5">
+  <h6 class="text-uppercase text-muted small mb-3">Backup & Restore</h6>
+  <div class="row g-3">
+    <div class="col-md-6">
+      <div class="card bg-dark border-secondary">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="bi bi-download me-2 text-success"></i>Download Backup
+          </h6>
+          <p class="card-text text-muted small mb-3">
+            Create a backup of all your notes, documents, uploads, and settings.
+          </p>
+          <form action="{{ url_for('backup_download') }}" method="post">
+            <button type="submit" class="btn btn-success">
+              <i class="bi bi-download me-2"></i>Download Backup
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card bg-dark border-secondary">
+        <div class="card-body">
+          <h6 class="card-title">
+            <i class="bi bi-upload me-2 text-warning"></i>Restore from Backup
+          </h6>
+          <p class="card-text text-muted small mb-3">
+            Upload a backup file to restore your data.
+          </p>
+          <form action="{{ url_for('backup_restore') }}" method="post" enctype="multipart/form-data"
+                onsubmit="return confirm('This will overwrite existing data. Continue?');">
+            <div class="input-group">
+              <input type="file" class="form-control" name="backup_file" accept=".tar.gz" required />
+              <button type="submit" class="btn btn-warning">
+                <i class="bi bi-upload me-2"></i>Restore
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Getting Started -->
 <div class="mt-5">
   <h6 class="text-uppercase text-muted small mb-3">Getting Started</h6>

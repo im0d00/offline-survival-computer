@@ -5,9 +5,11 @@ import os
 import json
 import sqlite3
 import datetime
+import tarfile
+import io
 from pathlib import Path
 
-from flask import Flask, render_template, jsonify, request, redirect, url_for, flash
+from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, send_file
 from flask_login import LoginManager, UserMixin, login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash
 from werkzeug.utils import secure_filename
@@ -548,6 +550,106 @@ def files_delete(filename: str):
 
     flash("File not found.", "danger")
     return redirect(url_for("files"))
+
+
+# ---------------------------------------------------------------------------
+# Backup & Restore
+# ---------------------------------------------------------------------------
+
+@app.route("/backup/download", methods=["POST"])
+@login_required
+def backup_download():
+    """Create and download a backup tarball of critical data."""
+    timestamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%d_%H%M%S")
+    backup_filename = f"survival_backup_{timestamp}.tar.gz"
+
+    # Create in-memory tarball
+    tar_buffer = io.BytesIO()
+
+    with tarfile.open(fileobj=tar_buffer, mode="w:gz") as tar:
+        # Add notes directory
+        if NOTES_DB.parent.exists():
+            tar.add(NOTES_DB.parent, arcname="notes")
+
+        # Add documents directory
+        if DOCS_DIR.exists():
+            tar.add(DOCS_DIR, arcname="documents")
+
+        # Add uploads directory
+        if UPLOADS_DIR.exists():
+            tar.add(UPLOADS_DIR, arcname="uploads")
+
+        # Add .env if it exists (in parent directory)
+        env_file = BASE_DIR.parent / ".env"
+        if env_file.exists():
+            tar.add(env_file, arcname=".env")
+
+    tar_buffer.seek(0)
+
+    return send_file(
+        tar_buffer,
+        as_attachment=True,
+        download_name=backup_filename,
+        mimetype="application/gzip"
+    )
+
+
+@app.route("/backup/restore", methods=["POST"])
+@login_required
+def backup_restore():
+    """Restore data from an uploaded backup tarball."""
+    if "backup_file" not in request.files:
+        flash("No backup file selected.", "danger")
+        return redirect(url_for("index"))
+
+    file = request.files["backup_file"]
+    if file.filename == "":
+        flash("No backup file selected.", "danger")
+        return redirect(url_for("index"))
+
+    if not file.filename.endswith(".tar.gz"):
+        flash("Invalid backup file. Must be a .tar.gz file.", "danger")
+        return redirect(url_for("index"))
+
+    try:
+        # Read tarball into memory
+        tar_buffer = io.BytesIO(file.read())
+        tar_buffer.seek(0)
+
+        with tarfile.open(fileobj=tar_buffer, mode="r:gz") as tar:
+            # Validate tarball contents
+            members = tar.getmembers()
+            valid_prefixes = ("notes/", "documents/", "uploads/", ".env")
+
+            for member in members:
+                # Prevent path traversal attacks
+                if member.name.startswith("/") or ".." in member.name:
+                    flash("Invalid backup file: contains unsafe paths.", "danger")
+                    return redirect(url_for("index"))
+
+                # Check if member starts with valid prefix
+                if not any(member.name.startswith(prefix) for prefix in valid_prefixes):
+                    if member.name not in valid_prefixes:  # Allow exact matches
+                        flash(f"Invalid backup file: unexpected file '{member.name}'.", "danger")
+                        return redirect(url_for("index"))
+
+            # Extract to data directory
+            for member in members:
+                if member.name == ".env":
+                    # Extract .env to parent directory
+                    tar.extract(member, path=BASE_DIR.parent)
+                else:
+                    # Extract data files to data directory
+                    tar.extract(member, path=DATA_DIR.parent / "data")
+
+        flash("Backup restored successfully!", "success")
+
+    except tarfile.TarError as e:
+        flash(f"Failed to restore backup: {str(e)}", "danger")
+    except Exception as e:
+        flash(f"An error occurred during restoration: {str(e)}", "danger")
+
+    return redirect(url_for("index"))
 
 
 # ---------------------------------------------------------------------------
