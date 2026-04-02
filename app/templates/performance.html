@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+{% block title %}Performance Dashboard – Offline Survival Computer{% endblock %}
+{% block header %}Performance Dashboard{% endblock %}
+
+{% block head %}
+<style>
+  .metric-card { transition: border-color .3s; }
+  .metric-card.alert-red  { border-color: #dc3545 !important; }
+  .metric-card.alert-warn { border-color: #ffc107 !important; }
+  .gauge-bar { height: 8px; border-radius: 4px; background: #2d3748; overflow: hidden; }
+  .gauge-fill { height: 100%; border-radius: 4px; transition: width .5s; }
+  .history-chart { height: 80px; width: 100%; }
+  .profile-badge { font-size: 0.75rem; padding: 0.25em 0.6em; border-radius: 12px; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Hardware Profile Banner -->
+<div class="card bg-dark border-secondary mb-4">
+  <div class="card-body d-flex flex-wrap align-items-center gap-3">
+    <i class="bi bi-cpu fs-2 text-info"></i>
+    <div>
+      <div class="fw-bold text-white">
+        Hardware Profile:
+        <span id="profileName" class="badge bg-info ms-1">{{ profile.profile_name }}</span>
+      </div>
+      <small class="text-muted">
+        RAM: <span id="hwRam">{{ "%.0f"|format(profile.ram_total_mb) }} MB</span> &bull;
+        AI Mode: <span id="aiMode" class="fw-semibold text-warning">{{ profile.ai_mode }}</span> &bull;
+        Search: <span id="searchMode" class="fw-semibold text-success">{{ profile.search_mode }}</span> &bull;
+        Workers: <span id="maxWorkers">{{ profile.max_workers }}</span>
+      </small>
+    </div>
+    <div class="ms-auto">
+      {% if not profile.meets_minimum_requirements %}
+      <span class="badge bg-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Below minimum requirements</span>
+      {% else %}
+      <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Hardware compatible</span>
+      {% endif %}
+    </div>
+  </div>
+  {% if profile.warnings %}
+  <div class="card-footer border-secondary bg-dark py-2">
+    {% for w in profile.warnings %}
+    <small class="text-warning"><i class="bi bi-exclamation-circle me-1"></i>{{ w }}</small>
+    {% endfor %}
+  </div>
+  {% endif %}
+</div>
+
+<!-- Real-time Metric Cards -->
+<div class="row g-3 mb-4">
+
+  <!-- CPU -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="card bg-dark border-secondary h-100 metric-card" id="cpuCard">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small text-uppercase">CPU</span>
+          <i class="bi bi-cpu text-info"></i>
+        </div>
+        <div class="fs-3 fw-bold text-white" id="cpuPercent">—</div>
+        <div class="text-muted small mb-2" id="cpuFreq">— MHz</div>
+        <div class="gauge-bar">
+          <div class="gauge-fill bg-info" id="cpuGauge" style="width:0%"></div>
+        </div>
+        <canvas class="history-chart mt-2" id="cpuChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- RAM -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="card bg-dark border-secondary h-100 metric-card" id="ramCard">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small text-uppercase">RAM</span>
+          <i class="bi bi-memory text-warning"></i>
+        </div>
+        <div class="fs-3 fw-bold text-white" id="ramUsed">—</div>
+        <div class="text-muted small mb-2" id="ramDetail">— / — MB</div>
+        <div class="gauge-bar">
+          <div class="gauge-fill bg-warning" id="ramGauge" style="width:0%"></div>
+        </div>
+        <canvas class="history-chart mt-2" id="ramChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Disk -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="card bg-dark border-secondary h-100 metric-card" id="diskCard">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small text-uppercase">Disk</span>
+          <i class="bi bi-hdd text-success"></i>
+        </div>
+        <div class="fs-3 fw-bold text-white" id="diskUsed">—</div>
+        <div class="text-muted small mb-2" id="diskDetail">— / — GB</div>
+        <div class="gauge-bar">
+          <div class="gauge-fill bg-success" id="diskGauge" style="width:0%"></div>
+        </div>
+        <div class="text-muted small mt-2">Free: <span id="diskFree">—</span> GB</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Battery -->
+  <div class="col-sm-6 col-lg-3">
+    <div class="card bg-dark border-secondary h-100 metric-card" id="batCard">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span class="text-muted small text-uppercase">Battery</span>
+          <i class="bi bi-battery-half text-danger" id="batIcon"></i>
+        </div>
+        <div class="fs-3 fw-bold text-white" id="batPercent">N/A</div>
+        <div class="text-muted small mb-2" id="batStatus">—</div>
+        <div class="gauge-bar">
+          <div class="gauge-fill bg-danger" id="batGauge" style="width:0%"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Alerts -->
+<div id="alertsContainer" class="mb-4" style="display:none;">
+  <h6 class="text-uppercase text-muted small mb-2"><i class="bi bi-exclamation-triangle-fill text-warning me-1"></i>Active Alerts</h6>
+  <div id="alertsList"></div>
+</div>
+
+<!-- Performance Targets Reference -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <h6 class="text-uppercase text-muted small mb-3">Performance Targets</h6>
+  </div>
+  <div class="col-md-6">
+    <div class="card bg-dark border-secondary">
+      <div class="card-header border-secondary text-muted small text-uppercase">Startup Targets</div>
+      <div class="card-body py-2">
+        <div class="d-flex justify-content-between py-1 border-bottom border-secondary">
+          <span class="text-muted small">Backend startup</span>
+          <span class="badge bg-success">&lt; 3s</span>
+        </div>
+        <div class="d-flex justify-content-between py-1 border-bottom border-secondary">
+          <span class="text-muted small">UI render</span>
+          <span class="badge bg-success">&lt; 500ms</span>
+        </div>
+        <div class="d-flex justify-content-between py-1 border-bottom border-secondary">
+          <span class="text-muted small">Emergency Mode</span>
+          <span class="badge bg-success">&lt; 2s</span>
+        </div>
+        <div class="d-flex justify-content-between py-1">
+          <span class="text-muted small">Database ready</span>
+          <span class="badge bg-success">&lt; 1s</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card bg-dark border-secondary">
+      <div class="card-header border-secondary text-muted small text-uppercase">Resource Targets</div>
+      <div class="card-body py-2">
+        <div class="d-flex justify-content-between py-1 border-bottom border-secondary">
+          <span class="text-muted small">Idle RAM</span>
+          <span class="badge bg-info">&lt; 100 MB</span>
+        </div>
+        <div class="d-flex justify-content-between py-1 border-bottom border-secondary">
+          <span class="text-muted small">Active RAM (FAST)</span>
+          <span class="badge bg-info">&lt; 300 MB</span>
+        </div>
+        <div class="d-flex justify-content-between py-1 border-bottom border-secondary">
+          <span class="text-muted small">Active RAM (SMART)</span>
+          <span class="badge bg-info">&lt; 500 MB</span>
+        </div>
+        <div class="d-flex justify-content-between py-1">
+          <span class="text-muted small">Idle CPU</span>
+          <span class="badge bg-info">&lt; 2%</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Hardware Info -->
+<div class="card bg-dark border-secondary">
+  <div class="card-header border-secondary text-muted small text-uppercase">Hardware Information</div>
+  <div class="card-body">
+    <div class="row g-2 text-sm">
+      <div class="col-6 col-md-3">
+        <div class="text-muted small">Architecture</div>
+        <div class="fw-semibold text-white">{{ hw_info.cpu_arch }}</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="text-muted small">CPU Cores (logical)</div>
+        <div class="fw-semibold text-white">{{ hw_info.cpu_cores_logical }}</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="text-muted small">Total RAM</div>
+        <div class="fw-semibold text-white">{{ "%.0f"|format(hw_info.ram_total_mb) }} MB</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="text-muted small">Raspberry Pi</div>
+        <div class="fw-semibold text-white">{{ "Yes" if hw_info.is_raspberry_pi else "No" }}</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="text-muted small">OS</div>
+        <div class="fw-semibold text-white">{{ hw_info.os_name }}</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="text-muted small">Disk Total</div>
+        <div class="fw-semibold text-white">{{ "%.1f"|format(hw_info.disk_total_gb) }} GB</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="text-muted small">Disk Free</div>
+        <div class="fw-semibold text-white">{{ "%.1f"|format(hw_info.disk_free_gb) }} GB</div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="text-muted small">DB Cache</div>
+        <div class="fw-semibold text-white">{{ profile.db_cache_kb }} KB</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+/* -----------------------------------------------------------------------
+ * Lightweight sparkline renderer using a <canvas> element.
+ * No external chart library required.
+ * ----------------------------------------------------------------------- */
+function drawSparkline(canvasId, data, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width  = canvas.offsetWidth;
+  const H = canvas.height = canvas.offsetHeight || 80;
+  ctx.clearRect(0, 0, W, H);
+  if (!data || data.length < 2) return;
+
+  const max = data.reduce((a, b) => Math.max(a, b), 1);
+  const step = W / (data.length - 1);
+
+  ctx.beginPath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  data.forEach((v, i) => {
+    const x = i * step;
+    const y = H - (v / max) * H;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+}
+
+/* -----------------------------------------------------------------------
+ * Gauge fill + card colouring helpers
+ * ----------------------------------------------------------------------- */
+function setGauge(gaugeId, percent, cardId, warnAt, dangerAt) {
+  const fill = document.getElementById(gaugeId);
+  if (fill) fill.style.width = Math.min(100, percent).toFixed(1) + '%';
+  const card = document.getElementById(cardId);
+  if (card) {
+    card.classList.remove('alert-red', 'alert-warn');
+    if (percent >= dangerAt) card.classList.add('alert-red');
+    else if (percent >= warnAt) card.classList.add('alert-warn');
+  }
+}
+
+/* -----------------------------------------------------------------------
+ * History ring buffer (last 60 samples per metric)
+ * ----------------------------------------------------------------------- */
+const MAX_HIST = 60;
+const cpuHist = [], ramHist = [];
+
+function pushHist(arr, val) {
+  arr.push(val);
+  if (arr.length > MAX_HIST) arr.shift();
+}
+
+/* -----------------------------------------------------------------------
+ * Fetch latest metrics and update UI
+ * ----------------------------------------------------------------------- */
+async function refreshMetrics() {
+  try {
+    const res = await fetch('/api/performance/metrics');
+    if (!res.ok) return;
+    const d = await res.json();
+
+    // CPU
+    const cpu = d.cpu_percent || 0;
+    pushHist(cpuHist, cpu);
+    const cpuEl = document.getElementById('cpuPercent');
+    if (cpuEl) cpuEl.textContent = cpu.toFixed(1) + '%';
+    const cpuFreqEl = document.getElementById('cpuFreq');
+    if (cpuFreqEl) cpuFreqEl.textContent = d.cpu_freq_mhz ? d.cpu_freq_mhz.toFixed(0) + ' MHz' : '— MHz';
+    setGauge('cpuGauge', cpu, 'cpuCard', 60, 80);
+    drawSparkline('cpuChart', cpuHist, '#63b3ed');
+
+    // RAM
+    const ramMb   = d.ram_used_mb   || 0;
+    const ramPct  = d.ram_percent   || 0;
+    const ramTot  = d.ram_total_mb  || 0;
+    pushHist(ramHist, ramMb);
+    const ramUsedEl = document.getElementById('ramUsed');
+    if (ramUsedEl) ramUsedEl.textContent = ramMb.toFixed(0) + ' MB';
+    const ramDetailEl = document.getElementById('ramDetail');
+    if (ramDetailEl) ramDetailEl.textContent = ramMb.toFixed(0) + ' / ' + ramTot.toFixed(0) + ' MB';
+    setGauge('ramGauge', ramPct, 'ramCard', 70, 85);
+    drawSparkline('ramChart', ramHist, '#f6ad55');
+
+    // Disk
+    const diskPct  = d.disk_percent  || 0;
+    const diskUsed = d.disk_used_gb  || 0;
+    const diskTot  = d.disk_total_gb || 0;
+    const diskFree = d.disk_free_gb  || 0;
+    const diskUsedEl = document.getElementById('diskUsed');
+    if (diskUsedEl) diskUsedEl.textContent = diskPct.toFixed(1) + '%';
+    const diskDetailEl = document.getElementById('diskDetail');
+    if (diskDetailEl) diskDetailEl.textContent = diskUsed.toFixed(1) + ' / ' + diskTot.toFixed(1) + ' GB';
+    const diskFreeEl = document.getElementById('diskFree');
+    if (diskFreeEl) diskFreeEl.textContent = diskFree.toFixed(1);
+    setGauge('diskGauge', diskPct, 'diskCard', 75, 90);
+
+    // Battery
+    const batPctEl = document.getElementById('batPercent');
+    const batStatusEl = document.getElementById('batStatus');
+    const batGaugeEl = document.getElementById('batGauge');
+    if (d.battery_percent !== null && d.battery_percent !== undefined) {
+      const bp = d.battery_percent;
+      if (batPctEl) batPctEl.textContent = bp.toFixed(0) + '%';
+      if (batStatusEl) batStatusEl.textContent = d.battery_plugged ? 'Charging' : 'On battery';
+      if (batGaugeEl) batGaugeEl.style.width = bp.toFixed(1) + '%';
+      setGauge('batGauge', 100 - bp, 'batCard', 60, 80); // inverted: low battery = alert
+    } else {
+      if (batPctEl) batPctEl.textContent = 'N/A';
+      if (batStatusEl) batStatusEl.textContent = 'Not detected';
+    }
+
+    // Alerts
+    const container = document.getElementById('alertsContainer');
+    const list = document.getElementById('alertsList');
+    if (d.alerts && d.alerts.length > 0) {
+      if (container) container.style.display = '';
+      if (list) {
+        list.innerHTML = d.alerts.map(a =>
+          `<div class="alert alert-warning py-1 px-3 mb-1 small">${a}</div>`
+        ).join('');
+      }
+    } else {
+      if (container) container.style.display = 'none';
+    }
+
+  } catch (e) {
+    // Silently ignore fetch errors (offline mode)
+  }
+}
+
+// Initial fetch + poll every 2 seconds
+refreshMetrics();
+setInterval(refreshMetrics, 2000);
+</script>
+{% endblock %}
