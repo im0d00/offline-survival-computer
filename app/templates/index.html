@@ -3,180 +3,224 @@
 {% block header %}Command Center{% endblock %}
 
 {% block content %}
-<div class="row g-4 mb-4">
-  <!-- Status Cards -->
-  <div class="col-12">
-    <h6 class="text-uppercase text-muted small mb-3">Service Status</h6>
-    <div class="row g-3">
-      <div class="col-sm-6 col-lg-3">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-body d-flex align-items-center gap-3">
-            <i class="bi bi-book-fill fs-2 text-info"></i>
-            <div>
-              <div class="fw-bold">Kiwix Library</div>
-              <span class="badge {{ 'bg-success' if statuses.kiwix else 'bg-secondary' }}">
-                {{ 'Online' if statuses.kiwix else 'Offline / Not Started' }}
-              </span>
+<!-- Service Status Section -->
+<section class="mb-5">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h6 class="text-uppercase text-secondary small fw-semibold mb-0 letter-spacing-wide">
+      <i class="bi bi-activity me-2"></i>Service Status
+    </h6>
+  </div>
+
+  <div class="row g-3">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body d-flex align-items-center gap-3 py-3">
+          <div class="flex-shrink-0">
+            <i class="bi bi-book-fill fs-1 text-info" style="opacity: 0.9;"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="fw-semibold text-white mb-1">Kiwix Library</div>
+            <span class="badge {{ 'bg-success' if statuses.kiwix else 'bg-secondary' }} px-2 py-1">
+              <i class="bi {{ 'bi-check-circle me-1' if statuses.kiwix else 'bi-x-circle me-1' }}"></i>
+              {{ 'Online' if statuses.kiwix else 'Offline' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body d-flex align-items-center gap-3 py-3">
+          <div class="flex-shrink-0">
+            <i class="bi bi-robot fs-1 text-warning" style="opacity: 0.9;"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="fw-semibold text-white mb-1">Ollama AI</div>
+            <span class="badge {{ 'bg-success' if statuses.ollama else 'bg-secondary' }} px-2 py-1">
+              <i class="bi {{ 'bi-check-circle me-1' if statuses.ollama else 'bi-x-circle me-1' }}"></i>
+              {{ 'Online' if statuses.ollama else 'Offline' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body d-flex align-items-center gap-3 py-3">
+          <div class="flex-shrink-0">
+            <i class="bi bi-journal-text fs-1 text-success" style="opacity: 0.9;"></i>
+          </div>
+          <div class="flex-grow-1">
+            <div class="fw-semibold text-white mb-1">Notes</div>
+            <div class="text-secondary small">
+              <i class="bi bi-file-text me-1"></i>
+              {{ note_count }} note{{ 's' if note_count != 1 }}
             </div>
           </div>
         </div>
       </div>
-      <div class="col-sm-6 col-lg-3">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-body d-flex align-items-center gap-3">
-            <i class="bi bi-robot fs-2 text-warning"></i>
-            <div>
-              <div class="fw-bold">Ollama AI</div>
-              <span class="badge {{ 'bg-success' if statuses.ollama else 'bg-secondary' }}">
-                {{ 'Online' if statuses.ollama else 'Offline / Not Started' }}
-              </span>
-            </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+      <div class="card h-100">
+        <div class="card-body d-flex align-items-center gap-3 py-3">
+          <div class="flex-shrink-0">
+            <i class="bi bi-file-earmark-text fs-1 text-primary" style="opacity: 0.9;"></i>
           </div>
-        </div>
-      </div>
-      <div class="col-sm-6 col-lg-3">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-body d-flex align-items-center gap-3">
-            <i class="bi bi-journal-text fs-2 text-success"></i>
-            <div>
-              <div class="fw-bold">Notes</div>
-              <span class="text-muted">{{ note_count }} note{{ 's' if note_count != 1 }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div class="col-sm-6 col-lg-3">
-        <div class="card bg-dark border-secondary h-100">
-          <div class="card-body d-flex align-items-center gap-3">
-            <i class="bi bi-file-earmark-text fs-2 text-primary"></i>
-            <div>
-              <div class="fw-bold">AI Documents</div>
-              <span class="text-muted">{{ doc_count }} document{{ 's' if doc_count != 1 }}</span>
+          <div class="flex-grow-1">
+            <div class="fw-semibold text-white mb-1">AI Documents</div>
+            <div class="text-secondary small">
+              <i class="bi bi-file-earmark me-1"></i>
+              {{ doc_count }} document{{ 's' if doc_count != 1 }}
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
+</section>
 
-<!-- Module Quick-Launch Grid -->
-<h6 class="text-uppercase text-muted small mb-3">Quick Access</h6>
-<div class="row g-4">
-
-  <div class="col-sm-6 col-lg-4">
-    <a href="{{ url_for('library') }}" class="text-decoration-none">
-      <div class="card bg-dark border-secondary h-100 module-card">
-        <div class="card-body text-center py-4">
-          <i class="bi bi-book-fill display-4 text-info mb-3"></i>
-          <h5 class="card-title text-white">Information Library</h5>
-          <p class="card-text text-muted small">
-            Offline Wikipedia, medical references, and survival guides via Kiwix.
-          </p>
-        </div>
-      </div>
-    </a>
+<!-- Quick Access Modules Section -->
+<section class="mb-5">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h6 class="text-uppercase text-secondary small fw-semibold mb-0 letter-spacing-wide">
+      <i class="bi bi-grid-3x3-gap me-2"></i>Quick Access
+    </h6>
   </div>
 
-  <div class="col-sm-6 col-lg-4">
-    <a href="{{ url_for('ai_assistant') }}" class="text-decoration-none">
-      <div class="card bg-dark border-secondary h-100 module-card">
-        <div class="card-body text-center py-4">
-          <i class="bi bi-robot display-4 text-warning mb-3"></i>
-          <h5 class="card-title text-white">AI Assistant</h5>
-          <p class="card-text text-muted small">
-            Private, local AI chat powered by Ollama. Upload your own documents.
-          </p>
+  <div class="row g-4">
+    <div class="col-sm-6 col-lg-4">
+      <a href="{{ url_for('library') }}" class="text-decoration-none">
+        <div class="card h-100 module-card">
+          <div class="card-body text-center py-5">
+            <div class="mb-3">
+              <i class="bi bi-book-fill display-3 text-info"></i>
+            </div>
+            <h5 class="card-title text-white fw-semibold mb-2">Information Library</h5>
+            <p class="card-text text-secondary small mb-0">
+              Offline Wikipedia, medical references, and survival guides via Kiwix
+            </p>
+          </div>
         </div>
-      </div>
-    </a>
+      </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+      <a href="{{ url_for('ai_assistant') }}" class="text-decoration-none">
+        <div class="card h-100 module-card">
+          <div class="card-body text-center py-5">
+            <div class="mb-3">
+              <i class="bi bi-robot display-3 text-warning"></i>
+            </div>
+            <h5 class="card-title text-white fw-semibold mb-2">AI Assistant</h5>
+            <p class="card-text text-secondary small mb-0">
+              Private, local AI chat powered by Ollama. Upload your own documents
+            </p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+      <a href="{{ url_for('education') }}" class="text-decoration-none">
+        <div class="card h-100 module-card">
+          <div class="card-body text-center py-5">
+            <div class="mb-3">
+              <i class="bi bi-mortarboard-fill display-3 text-success"></i>
+            </div>
+            <h5 class="card-title text-white fw-semibold mb-2">Education</h5>
+            <p class="card-text text-secondary small mb-0">
+              Offline courses including Khan Academy content via Kiwix
+            </p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+      <a href="{{ url_for('maps') }}" class="text-decoration-none">
+        <div class="card h-100 module-card">
+          <div class="card-body text-center py-5">
+            <div class="mb-3">
+              <i class="bi bi-map-fill display-3 text-danger"></i>
+            </div>
+            <h5 class="card-title text-white fw-semibold mb-2">Offline Maps</h5>
+            <p class="card-text text-secondary small mb-0">
+              Navigate with downloadable offline maps via OpenStreetMap and Leaflet
+            </p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="col-sm-6 col-lg-4">
+      <a href="{{ url_for('notes') }}" class="text-decoration-none">
+        <div class="card h-100 module-card">
+          <div class="card-body text-center py-5">
+            <div class="mb-3">
+              <i class="bi bi-journal-text display-3 text-light"></i>
+            </div>
+            <h5 class="card-title text-white fw-semibold mb-2">Notes</h5>
+            <p class="card-text text-secondary small mb-0">
+              Simple, private note-taking with tags and full-text search
+            </p>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    {% if kiwix_url %}
+    <div class="col-sm-6 col-lg-4">
+      <a href="{{ kiwix_url }}" target="_blank" rel="noopener" class="text-decoration-none">
+        <div class="card h-100 module-card">
+          <div class="card-body text-center py-5">
+            <div class="mb-3">
+              <i class="bi bi-globe display-3" style="color: #a78bfa;"></i>
+            </div>
+            <h5 class="card-title text-white fw-semibold mb-2">Kiwix Direct</h5>
+            <p class="card-text text-secondary small mb-0">
+              Open the full Kiwix browser interface in a new tab
+            </p>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<!-- Getting Started Guide Section -->
+<section>
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <h6 class="text-uppercase text-secondary small fw-semibold mb-0 letter-spacing-wide">
+      <i class="bi bi-rocket-takeoff me-2"></i>Getting Started
+    </h6>
   </div>
 
-  <div class="col-sm-6 col-lg-4">
-    <a href="{{ url_for('education') }}" class="text-decoration-none">
-      <div class="card bg-dark border-secondary h-100 module-card">
-        <div class="card-body text-center py-4">
-          <i class="bi bi-mortarboard-fill display-4 text-success mb-3"></i>
-          <h5 class="card-title text-white">Education</h5>
-          <p class="card-text text-muted small">
-            Offline courses including Khan Academy content via Kiwix.
-          </p>
-        </div>
-      </div>
-    </a>
-  </div>
-
-  <div class="col-sm-6 col-lg-4">
-    <a href="{{ url_for('maps') }}" class="text-decoration-none">
-      <div class="card bg-dark border-secondary h-100 module-card">
-        <div class="card-body text-center py-4">
-          <i class="bi bi-map-fill display-4 text-danger mb-3"></i>
-          <h5 class="card-title text-white">Offline Maps</h5>
-          <p class="card-text text-muted small">
-            Navigate with downloadable offline maps via OpenStreetMap and Leaflet.
-          </p>
-        </div>
-      </div>
-    </a>
-  </div>
-
-  <div class="col-sm-6 col-lg-4">
-    <a href="{{ url_for('notes') }}" class="text-decoration-none">
-      <div class="card bg-dark border-secondary h-100 module-card">
-        <div class="card-body text-center py-4">
-          <i class="bi bi-journal-text display-4 text-light mb-3"></i>
-          <h5 class="card-title text-white">Notes</h5>
-          <p class="card-text text-muted small">
-            Simple, private note-taking with tags and full-text search.
-          </p>
-        </div>
-      </div>
-    </a>
-  </div>
-
-  {% if kiwix_url %}
-  <div class="col-sm-6 col-lg-4">
-    <a href="{{ kiwix_url }}" target="_blank" rel="noopener" class="text-decoration-none">
-      <div class="card bg-dark border-secondary h-100 module-card">
-        <div class="card-body text-center py-4">
-          <i class="bi bi-globe display-4 text-purple mb-3" style="color:#a78bfa"></i>
-          <h5 class="card-title text-white">Kiwix Direct</h5>
-          <p class="card-text text-muted small">
-            Open the full Kiwix browser interface in a new tab.
-          </p>
-        </div>
-      </div>
-    </a>
-  </div>
-  {% endif %}
-
-</div>
-
-<!-- Getting Started -->
-<div class="mt-5">
-  <h6 class="text-uppercase text-muted small mb-3">Getting Started</h6>
-  <div class="card bg-dark border-secondary">
-    <div class="card-body">
-      <ol class="mb-0 text-muted">
-        <li class="mb-2">
-          <strong class="text-white">Add content to Kiwix</strong> – download <code>.zim</code>
-          files (Wikipedia, Khan Academy, First Aid, etc.) and place them in the
-          <code>data/zim/</code> folder.  Kiwix will serve them automatically.
+  <div class="card">
+    <div class="card-body p-4">
+      <ol class="mb-0 ps-3">
+        <li class="mb-3 text-secondary">
+          <strong class="text-white d-block mb-1">Add content to Kiwix</strong>
+          Download <code>.zim</code> files (Wikipedia, Khan Academy, First Aid, etc.) and place them in the
+          <code>data/zim/</code> folder. Kiwix will serve them automatically.
         </li>
-        <li class="mb-2">
-          <strong class="text-white">Pull an AI model</strong> – run
-          <code>docker compose exec ollama ollama pull llama3</code> to download a language model.
+        <li class="mb-3 text-secondary">
+          <strong class="text-white d-block mb-1">Pull an AI model</strong>
+          Run <code>docker compose exec ollama ollama pull llama3</code> to download a language model.
         </li>
-        <li class="mb-2">
-          <strong class="text-white">Download offline maps</strong> – use the Maps page to cache
-          map tiles for your region so they work without internet.
+        <li class="mb-3 text-secondary">
+          <strong class="text-white d-block mb-1">Download offline maps</strong>
+          Use the Maps page to cache map tiles for your region so they work without internet.
         </li>
-        <li>
-          <strong class="text-white">Start taking notes</strong> – use the Notes module to record
-          procedures, contacts, or any survival-critical information.
+        <li class="mb-0 text-secondary">
+          <strong class="text-white d-block mb-1">Start taking notes</strong>
+          Use the Notes module to record procedures, contacts, or any survival-critical information.
         </li>
       </ol>
     </div>
   </div>
-</div>
+</section>
 {% endblock %}

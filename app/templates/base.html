@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Offline-first survival computer with AI, knowledge library, and offline tools" />
   <title>{% block title %}Offline Survival Computer{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <!-- Bootstrap 5 (local fallback – bundled in Docker image) -->
@@ -16,107 +17,158 @@
 </head>
 <body>
 
-<!-- Sidebar Navigation -->
+<!-- Main Layout Wrapper -->
 <div class="d-flex" id="wrapper">
-  <nav id="sidebar" class="bg-dark border-end border-secondary d-flex flex-column flex-shrink-0 p-3">
-    <a href="{{ url_for('index') }}" class="navbar-brand text-white text-decoration-none mb-3">
+  <!-- Sidebar Navigation -->
+  <nav id="sidebar" class="d-flex flex-column flex-shrink-0 p-3" role="navigation" aria-label="Main navigation">
+    <a href="{{ url_for('index') }}" class="navbar-brand text-white text-decoration-none mb-4 d-flex align-items-center">
       <i class="bi bi-cpu-fill me-2 text-success"></i>
       <span class="fw-bold">SurvivalPC</span>
     </a>
-    <ul class="nav nav-pills flex-column mb-auto">
-      <li class="nav-item">
+    <ul class="nav nav-pills flex-column mb-auto" role="menu">
+      <li class="nav-item" role="none">
         <a href="{{ url_for('index') }}"
-           class="nav-link {{ 'active' if request.endpoint == 'index' }}">
+           class="nav-link {{ 'active' if request.endpoint == 'index' }}"
+           role="menuitem"
+           aria-current="{{ 'page' if request.endpoint == 'index' else 'false' }}">
           <i class="bi bi-grid-fill me-2"></i>Command Center
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" role="none">
         <a href="{{ url_for('library') }}"
-           class="nav-link {{ 'active' if request.endpoint == 'library' }}">
+           class="nav-link {{ 'active' if request.endpoint == 'library' }}"
+           role="menuitem"
+           aria-current="{{ 'page' if request.endpoint == 'library' else 'false' }}">
           <i class="bi bi-book-fill me-2"></i>Library
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" role="none">
         <a href="{{ url_for('ai_assistant') }}"
-           class="nav-link {{ 'active' if request.endpoint == 'ai_assistant' }}">
+           class="nav-link {{ 'active' if request.endpoint == 'ai_assistant' }}"
+           role="menuitem"
+           aria-current="{{ 'page' if request.endpoint == 'ai_assistant' else 'false' }}">
           <i class="bi bi-robot me-2"></i>AI Assistant
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" role="none">
         <a href="{{ url_for('education') }}"
-           class="nav-link {{ 'active' if request.endpoint == 'education' }}">
+           class="nav-link {{ 'active' if request.endpoint == 'education' }}"
+           role="menuitem"
+           aria-current="{{ 'page' if request.endpoint == 'education' else 'false' }}">
           <i class="bi bi-mortarboard-fill me-2"></i>Education
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" role="none">
         <a href="{{ url_for('maps') }}"
-           class="nav-link {{ 'active' if request.endpoint == 'maps' }}">
+           class="nav-link {{ 'active' if request.endpoint == 'maps' }}"
+           role="menuitem"
+           aria-current="{{ 'page' if request.endpoint == 'maps' else 'false' }}">
           <i class="bi bi-map-fill me-2"></i>Maps
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" role="none">
         <a href="{{ url_for('notes') }}"
-           class="nav-link {{ 'active' if request.endpoint in ('notes', 'notes_view', 'notes_new', 'notes_edit') }}">
+           class="nav-link {{ 'active' if request.endpoint in ('notes', 'notes_view', 'notes_new', 'notes_edit') }}"
+           role="menuitem"
+           aria-current="{{ 'page' if request.endpoint in ('notes', 'notes_view', 'notes_new', 'notes_edit') else 'false' }}">
           <i class="bi bi-journal-text me-2"></i>Notes
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" role="none">
         <a href="{{ url_for('performance') }}"
-           class="nav-link {{ 'active' if request.endpoint == 'performance' }}">
+           class="nav-link {{ 'active' if request.endpoint == 'performance' }}"
+           role="menuitem"
+           aria-current="{{ 'page' if request.endpoint == 'performance' else 'false' }}">
           <i class="bi bi-speedometer2 me-2"></i>Performance
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" role="none">
         <a href="{{ url_for('files') }}"
-           class="nav-link {{ 'active' if request.endpoint == 'files' }}">
+           class="nav-link {{ 'active' if request.endpoint == 'files' }}"
+           role="menuitem"
+           aria-current="{{ 'page' if request.endpoint == 'files' else 'false' }}">
           <i class="bi bi-folder2-open me-2"></i>Files
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" role="none">
         <a href="{{ url_for('inventory') }}"
-           class="nav-link {{ 'active' if request.endpoint == 'inventory' }}">
+           class="nav-link {{ 'active' if request.endpoint == 'inventory' }}"
+           role="menuitem"
+           aria-current="{{ 'page' if request.endpoint == 'inventory' else 'false' }}">
           <i class="bi bi-box-seam me-2"></i>Inventory
         </a>
       </li>
-      <li class="nav-item">
+      <li class="nav-item" role="none">
         <a href="{{ url_for('system_page') }}"
-           class="nav-link {{ 'active' if request.endpoint == 'system_page' }}">
+           class="nav-link {{ 'active' if request.endpoint == 'system_page' }}"
+           role="menuitem"
+           aria-current="{{ 'page' if request.endpoint == 'system_page' else 'false' }}">
           <i class="bi bi-activity me-2"></i>System
         </a>
       </li>
     </ul>
-    <div class="mt-auto text-muted small">
-      <i class="bi bi-wifi-off me-1"></i>Offline-First &bull; Private
+
+    <div class="mt-auto text-muted small d-flex align-items-center gap-2">
+      <i class="bi bi-wifi-off"></i>
+      <span>Offline-First · Private</span>
     </div>
   </nav>
 
-  <!-- Page Content -->
+  <!-- Main Content Area -->
   <div id="page-content" class="flex-grow-1 d-flex flex-column">
-    <header class="bg-dark border-bottom border-secondary px-4 py-2 d-flex align-items-center justify-content-between">
-      <button class="btn btn-sm btn-outline-secondary d-md-none" id="sidebarToggle">
-        <i class="bi bi-list"></i>
-      </button>
-      <h5 class="mb-0 text-white">{% block header %}{% endblock %}</h5>
+    <!-- Header Bar -->
+    <header class="px-4 py-3 d-flex align-items-center justify-content-between" role="banner">
+      <div class="d-flex align-items-center gap-3">
+        <button class="btn btn-sm btn-outline-secondary d-md-none"
+                id="sidebarToggle"
+                aria-label="Toggle sidebar"
+                aria-expanded="false">
+          <i class="bi bi-list"></i>
+        </button>
+        <h5 class="mb-0 text-white">{% block header %}{% endblock %}</h5>
+      </div>
+
       <div class="d-flex align-items-center gap-2">
         {% if current_user.is_authenticated %}
-        <span class="badge bg-secondary text-uppercase">{{ current_user.id }}</span>
-        <a class="btn btn-sm btn-outline-light" href="{{ url_for('logout') }}">
+        <span class="badge bg-secondary text-uppercase" title="Current user">
+          <i class="bi bi-person-circle me-1"></i>{{ current_user.id }}
+        </span>
+        <a class="btn btn-sm btn-outline-light"
+           href="{{ url_for('logout') }}"
+           title="Sign out">
           <i class="bi bi-box-arrow-right me-1"></i>Logout
         </a>
         {% endif %}
-        <span class="badge bg-success"><i class="bi bi-hdd-fill me-1"></i>Offline</span>
+        <span class="badge bg-success" title="System is operating offline">
+          <i class="bi bi-hdd-fill me-1"></i>Offline
+        </span>
       </div>
     </header>
 
-    <main class="flex-grow-1 p-4 overflow-auto">
+    <!-- Main Content Section -->
+    <main class="flex-grow-1 p-4 overflow-auto" role="main">
+      <!-- Flash Messages -->
       {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-          {% for category, message in messages %}
-            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
-              {{ message }}
-              <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-          {% endfor %}
+          <div class="mb-4">
+            {% for category, message in messages %}
+              <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                <strong>
+                  {% if category == 'success' %}
+                    <i class="bi bi-check-circle-fill me-2"></i>
+                  {% elif category == 'danger' %}
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                  {% elif category == 'warning' %}
+                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                  {% elif category == 'info' %}
+                    <i class="bi bi-info-circle-fill me-2"></i>
+                  {% endif %}
+                </strong>
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+              </div>
+            {% endfor %}
+          </div>
         {% endif %}
       {% endwith %}
 
