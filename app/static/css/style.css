@@ -475,6 +475,10 @@ code {
   color: var(--text-tertiary) !important;
 }
 
+.letter-spacing-wide {
+  letter-spacing: 0.05em;
+}
+
 /* ========== MOBILE RESPONSIVE ========== */
 @media (max-width: 768px) {
   #sidebar {
